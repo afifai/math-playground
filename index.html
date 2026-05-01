@@ -890,7 +890,7 @@ document.getElementById('pg-magic').innerHTML = `
   </div>
 
   <div style="position:relative;display:inline-block;margin:20px auto;display:flex;justify-content:center">
-    <div style="position:relative;display:inline-block" id="msWrap">
+    <div style="position:relative;display:inline-block;padding-right:50px;padding-bottom:40px" id="msWrap">
       <table id="msTable" style="border-collapse:separate;border-spacing:6px;position:relative;z-index:2">
         <tr><td><input type="number" id="ms0" class="ms-cell"></td><td><input type="number" id="ms1" class="ms-cell"></td><td><input type="number" id="ms2" class="ms-cell"></td><td><input type="number" id="ms3" class="ms-cell"></td></tr>
         <tr><td><input type="number" id="ms4" class="ms-cell"></td><td><input type="number" id="ms5" class="ms-cell"></td><td><input type="number" id="ms6" class="ms-cell"></td><td><input type="number" id="ms7" class="ms-cell"></td></tr>
@@ -980,19 +980,19 @@ function msDrawSumBubble(ctx,idx,sum,color,side){
   if(side==='right'){
     const cell=document.getElementById('ms'+idx[idx.length-1]);
     const cr=cell.getBoundingClientRect();
-    x=cr.right-wrap.left+14; y=cr.top-wrap.top+cr.height/2;
+    x=cr.right-wrap.left+22; y=cr.top-wrap.top+cr.height/2;
   } else if(side==='bottom'){
     const cell=document.getElementById('ms'+idx[idx.length-1]);
     const cr=cell.getBoundingClientRect();
-    x=cr.left-wrap.left+cr.width/2; y=cr.bottom-wrap.top+14;
+    x=cr.left-wrap.left+cr.width/2; y=cr.bottom-wrap.top+20;
   } else if(side==='topright'){
     const cell=document.getElementById('ms'+idx[0]);
     const cr=cell.getBoundingClientRect();
-    x=cr.right-wrap.left+14; y=cr.top-wrap.top-4;
+    x=cr.right-wrap.left+22; y=cr.top-wrap.top-4;
   } else if(side==='bottomleft'){
     const cell=document.getElementById('ms'+idx[idx.length-1]);
     const cr=cell.getBoundingClientRect();
-    x=cr.left-wrap.left-14; y=cr.bottom-wrap.top+4;
+    x=cr.left-wrap.left-22; y=cr.bottom-wrap.top+4;
   } else {
     // center of group
     const pts=idx.map(i=>msCellCenter(i));
