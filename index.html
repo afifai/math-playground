@@ -118,6 +118,7 @@ nav .back.show{display:inline-flex}
 <div class="playground" id="pg-eksponen"></div>
 <div class="playground" id="pg-statistik"></div>
 <div class="playground" id="pg-detective"></div>
+<div class="playground" id="pg-magic"></div>
 
 <script>
 // ============================================================
@@ -165,6 +166,13 @@ const playgrounds = [
     title: 'Graph Detective — AI Tebak Grafik',
     desc: 'Gambar grafik di kertas, foto, lalu AI coba tebak persamaannya. Siapa lebih pintar?',
     tag: 'AI + Math', tagClass: 'tag-kalkulus',
+  },
+  {
+    id: 'magic',
+    emoji: '✨',
+    title: 'Magic Square 4×4',
+    desc: 'Isi angka di kotak 4×4, lalu lihat keajaiban: semua baris, kolom, diagonal, dan sub-kotak jumlahnya sama!',
+    tag: 'Ice Breaking', tagClass: 'tag-statistik',
   },
 ];
 
@@ -867,5 +875,176 @@ pgInit['detective']=()=>{
   gdDraw();
 };
 </script>
+
+<script>
+// ============================================================
+// 7. MAGIC SQUARE 4x4
+// ============================================================
+document.getElementById('pg-magic').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>✨ Magic Square 4×4</h2><p>Isi angka, lalu saksikan keajaibannya</p></div>
+  <div class="pg-section">
+    <h3>Apa itu Magic Square?</h3>
+    <p>Magic Square adalah kotak berisi angka di mana <strong>jumlah setiap baris, kolom, diagonal, dan sub-kotak 2×2 di pojok semuanya sama</strong>. Angka ajaib ini disebut <em>magic constant</em>.</p>
+    <p style="margin-top:8px">Untuk magic square 4×4 klasik berisi angka 1–16, magic constant-nya adalah <strong>34</strong>.</p>
+  </div>
+
+  <div style="display:flex;justify-content:center;margin:20px 0">
+    <table id="msTable" style="border-collapse:collapse">
+      <tr><td><input type="number" id="ms0" class="ms-cell"></td><td><input type="number" id="ms1" class="ms-cell"></td><td><input type="number" id="ms2" class="ms-cell"></td><td><input type="number" id="ms3" class="ms-cell"></td></tr>
+      <tr><td><input type="number" id="ms4" class="ms-cell"></td><td><input type="number" id="ms5" class="ms-cell"></td><td><input type="number" id="ms6" class="ms-cell"></td><td><input type="number" id="ms7" class="ms-cell"></td></tr>
+      <tr><td><input type="number" id="ms8" class="ms-cell"></td><td><input type="number" id="ms9" class="ms-cell"></td><td><input type="number" id="ms10" class="ms-cell"></td><td><input type="number" id="ms11" class="ms-cell"></td></tr>
+      <tr><td><input type="number" id="ms12" class="ms-cell"></td><td><input type="number" id="ms13" class="ms-cell"></td><td><input type="number" id="ms14" class="ms-cell"></td><td><input type="number" id="ms15" class="ms-cell"></td></tr>
+    </table>
+  </div>
+
+  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
+    <button onclick="msCalculate()" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .2s">🪄 Hitung!</button>
+    <button onclick="msFillClassic()" style="background:var(--bg);color:var(--dark);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.9rem;cursor:pointer">Isi Contoh (1–16)</button>
+    <button onclick="msClear()" style="background:var(--bg);color:var(--gray);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.9rem;cursor:pointer">Kosongkan</button>
+  </div>
+
+  <div id="msResults" style="max-width:600px;margin:0 auto"></div>
+
+  <div class="pg-section" style="margin-top:20px">
+    <h3>Coba Sendiri!</h3>
+    <ul>
+      <li>Klik "Isi Contoh" untuk lihat magic square klasik 1–16</li>
+      <li>Klik "Hitung!" dan perhatikan semua jumlah = 34</li>
+      <li>Coba isi angka sendiri — bisakah kamu bikin magic square?</li>
+      <li>Fun fact: ada <strong>880</strong> magic square 4×4 yang berbeda (tidak termasuk rotasi dan refleksi)</li>
+    </ul>
+  </div>
+</div>`;
+
+function msGetVals(){return Array.from({length:16},(_,i)=>{const v=document.getElementById('ms'+i).value;return v===''?NaN:Number(v);});}
+
+function msFillClassic(){
+  // Albrecht Dürer's magic square
+  const vals=[16,3,2,13,5,10,11,8,9,6,7,12,4,15,14,1];
+  vals.forEach((v,i)=>{document.getElementById('ms'+i).value=v;});
+  document.getElementById('msResults').innerHTML='';
+  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='';});
+}
+
+function msClear(){
+  for(let i=0;i<16;i++) document.getElementById('ms'+i).value='';
+  document.getElementById('msResults').innerHTML='';
+  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='';});
+}
+
+async function msCalculate(){
+  const vals=msGetVals();
+  if(vals.some(isNaN)){alert('Isi semua 16 kotak dengan angka!');return;}
+
+  // Reset styles
+  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';c.style.transition='all 0.4s';});
+  document.getElementById('msResults').innerHTML='';
+
+  const g=(r,c)=>vals[r*4+c];
+  const checks=[];
+
+  // Rows
+  for(let r=0;r<4;r++){
+    const idx=[r*4,r*4+1,r*4+2,r*4+3];
+    checks.push({label:'Baris '+(r+1),idx,sum:idx.reduce((a,i)=>a+vals[i],0)});
+  }
+  // Columns
+  for(let c=0;c<4;c++){
+    const idx=[c,c+4,c+8,c+12];
+    checks.push({label:'Kolom '+(c+1),idx,sum:idx.reduce((a,i)=>a+vals[i],0)});
+  }
+  // Diagonals
+  checks.push({label:'Diagonal ↘',idx:[0,5,10,15],sum:g(0,0)+g(1,1)+g(2,2)+g(3,3)});
+  checks.push({label:'Diagonal ↗',idx:[3,6,9,12],sum:g(0,3)+g(1,2)+g(2,1)+g(3,0)});
+
+  // 4 corner sub-squares 2x2
+  const subs=[
+    {label:'Sub 2×2 kiri-atas',idx:[0,1,4,5]},
+    {label:'Sub 2×2 kanan-atas',idx:[2,3,6,7]},
+    {label:'Sub 2×2 kiri-bawah',idx:[8,9,12,13]},
+    {label:'Sub 2×2 kanan-bawah',idx:[10,11,14,15]},
+  ];
+  subs.forEach(s=>{s.sum=s.idx.reduce((a,i)=>a+vals[i],0);checks.push(s);});
+
+  // Center 2x2
+  checks.push({label:'Sub 2×2 tengah',idx:[5,6,9,10],sum:g(1,1)+g(1,2)+g(2,1)+g(2,2)});
+
+  // 4 corners
+  checks.push({label:'4 Pojok',idx:[0,3,12,15],sum:g(0,0)+g(0,3)+g(3,0)+g(3,3)});
+
+  const colors=['#0078B2','#7C4DFF','#FF5E57','#1a8a45','#b07d00','#e05694'];
+  const allSums=checks.map(c=>c.sum);
+  const allSame=allSums.every(s=>s===allSums[0]);
+
+  const container=document.getElementById('msResults');
+
+  // Animate each check one by one
+  for(let i=0;i<checks.length;i++){
+    const ch=checks[i];
+    const color=colors[i%colors.length];
+
+    // Highlight cells
+    document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';});
+    ch.idx.forEach(idx=>{
+      const cell=document.getElementById('ms'+idx);
+      cell.style.background=color+'22';
+      cell.style.color=color;
+    });
+
+    // Add result row
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 14px;margin-bottom:4px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);opacity:0;transform:translateY(8px);transition:all 0.3s';
+    const isMagic=ch.sum===allSums[0]&&allSame;
+    row.innerHTML='<span style="font-size:.85rem;font-weight:600;color:'+color+'">'+ch.label+'</span>'
+      +'<span style="display:flex;align-items:center;gap:6px">'
+      +'<span style="font-family:monospace;font-size:.85rem;color:var(--dark)">'+ch.idx.map(j=>vals[j]).join(' + ')+' = </span>'
+      +'<span style="font-weight:800;font-size:1.1rem;color:'+color+'">'+ch.sum+'</span>'
+      +'</span>';
+    container.appendChild(row);
+
+    // Trigger animation
+    await new Promise(r=>setTimeout(r,50));
+    row.style.opacity='1';row.style.transform='translateY(0)';
+
+    await new Promise(r=>setTimeout(r,180));
+  }
+
+  // Reset cell highlight
+  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';});
+
+  // Final verdict
+  await new Promise(r=>setTimeout(r,200));
+  const verdict=document.createElement('div');
+  verdict.style.cssText='text-align:center;padding:16px;margin-top:12px;border-radius:12px;font-size:1.1rem;font-weight:700;opacity:0;transform:scale(0.9);transition:all 0.4s';
+  if(allSame){
+    verdict.style.background='#1a8a4515';verdict.style.border='2px solid #1a8a45';verdict.style.color='#1a8a45';
+    verdict.innerHTML='🎉 MAGIC! Semua jumlah = <span style="font-size:1.4rem">'+allSums[0]+'</span>';
+  } else {
+    verdict.style.background='#FF5E5715';verdict.style.border='2px solid #FF5E57';verdict.style.color='#FF5E57';
+    const unique=[...new Set(allSums)];
+    verdict.innerHTML='❌ Belum magic — ada '+unique.length+' nilai berbeda: '+unique.join(', ');
+  }
+  container.appendChild(verdict);
+  await new Promise(r=>setTimeout(r,50));
+  verdict.style.opacity='1';verdict.style.transform='scale(1)';
+}
+
+pgInit['magic']=()=>{};
+</script>
+
+<style>
+.ms-cell{
+  width:clamp(50px,15vw,72px);height:clamp(50px,15vw,72px);
+  text-align:center;font-size:clamp(1.1rem,4vw,1.5rem);font-weight:700;
+  border:1.5px solid var(--border);border-radius:8px;
+  background:var(--white);color:var(--dark);outline:none;
+  transition:all 0.4s;
+  -moz-appearance:textfield;
+}
+.ms-cell::-webkit-inner-spin-button,.ms-cell::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ms-cell:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0078B222}
+#msTable td{padding:3px}
+</style>
 </body>
 </html>
