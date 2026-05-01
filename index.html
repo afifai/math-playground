@@ -1120,14 +1120,19 @@ document.getElementById('pg-neuralnet').innerHTML = `
   <div id="nnTrainSection">
     <div class="pg-section">
       <h3>Langkah 1: Latih Neural Network</h3>
-      <p>Klik tombol di bawah untuk melatih neural network dengan 1.797 gambar angka tulisan tangan (dataset sklearn digits, 8×8 piksel).</p>
+      <p>Klik tombol di bawah untuk melatih neural network dengan <strong>1.797 gambar angka</strong> tulisan tangan.</p>
       <p style="margin-top:6px">Arsitektur: <strong>64 input → 64 neuron → 32 neuron → 10 output</strong></p>
-      <p style="margin-top:6px;font-size:.8rem;color:var(--gray)">Total parameter: 64×48 + 48 + 48×24 + 24 + 24×10 + 10 = <strong>4.474 angka</strong> — semuanya cuma perkalian matriks + fungsi aktivasi.</p>
     </div>
     <div style="text-align:center;margin:16px 0">
       <button onclick="nnTrain()" id="nnBtnTrain" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;padding:14px 32px;font-size:1.1rem;font-weight:700;cursor:pointer">🚀 Mulai Training!</button>
     </div>
-    <div id="nnTrainLog" style="background:var(--dark);color:#51cf66;border-radius:10px;padding:16px;font-family:'Courier New',monospace;font-size:.8rem;line-height:1.8;max-height:240px;overflow-y:auto;display:none"></div>
+    <div id="nnTrainVizWrap" style="display:none">
+      <canvas id="nnTrainViz" width="800" height="300" style="width:100%;height:auto;border:1.5px solid var(--border);border-radius:12px;background:#FAFBFC"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:0 4px">
+        <div id="nnTrainStatus" style="font-size:.85rem;color:var(--gray)"></div>
+        <div id="nnTrainAcc" style="font-size:1.1rem;font-weight:800;color:var(--blue)"></div>
+      </div>
+    </div>
   </div>
 
   <div id="nnPredictSection" style="display:none">
@@ -1292,54 +1297,112 @@ function nnDrawViz(){
 async function nnTrain(){
   const btn=document.getElementById('nnBtnTrain');
   btn.disabled=true;btn.textContent='Training...';
-  const log=document.getElementById('nnTrainLog');
-  log.style.display='block';log.innerHTML='';
+  document.getElementById('nnTrainVizWrap').style.display='block';
 
-  const lines=[
-    'Initializing neural network...',
-    'Architecture: Input(64) → Dense(32, ReLU) → Dense(16, ReLU) → Dense(10, Softmax)',
-    'Total parameters: 2,778',
-    'Loading dataset: 1,797 images (8×8 pixels)...',
-    '',
-    'Starting training...',
-  ];
-  for(const line of lines){
-    log.innerHTML+='<div>'+line+'</div>';log.scrollTop=log.scrollHeight;
-    await new Promise(r=>setTimeout(r,150));
+  const cv=document.getElementById('nnTrainViz');
+  const ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=800,H=300;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const layerSizes=[64,64,32,10];
+  const layerX=[120,300,500,660];
+  const layerColors=['#667085','#0078B2','#7C4DFF','#FF5E57'];
+  const layerLabels=['Input (64)','Hidden 1 (64)','Hidden 2 (32)','Output (10)'];
+  const maxShow=[16,12,10,10];
+  const pad=30;
+
+  function drawFrame(progress,epoch,acc){
+    ctx.fillStyle='#FAFBFC';ctx.fillRect(0,0,W,H);
+
+    // Draw connections — intensity grows with progress
+    for(let l=0;l<layerSizes.length-1;l++){
+      const fn=Math.min(layerSizes[l],maxShow[l]),tn=Math.min(layerSizes[l+1],maxShow[l+1]);
+      const fGap=(H-2*pad)/(fn+1),tGap=(H-2*pad)/(tn+1);
+      for(let i=0;i<fn;i++){
+        for(let j=0;j<tn;j++){
+          const fy=pad+fGap*(i+1),ty=pad+tGap*(j+1);
+          // Random-ish weight that stabilizes with progress
+          const seed=(i*17+j*31+l*53)%100/100;
+          const strength=progress*seed;
+          ctx.strokeStyle=layerColors[l+1];
+          ctx.globalAlpha=Math.min(0.15,strength*0.2);
+          ctx.lineWidth=Math.max(0.5,strength*2);
+          ctx.beginPath();ctx.moveTo(layerX[l]+10,fy);ctx.lineTo(layerX[l+1]-10,ty);ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha=1;
+
+    // Draw nodes — activation grows with progress
+    for(let l=0;l<layerSizes.length;l++){
+      const n=Math.min(layerSizes[l],maxShow[l]);
+      const gap=(H-2*pad)/(n+1);
+      for(let i=0;i<n;i++){
+        const x=layerX[l],y=pad+gap*(i+1);
+        const seed=(i*13+l*37)%100/100;
+        const activation=l===0?0.3+seed*0.5:progress*seed;
+        const r=Math.max(4,4+activation*5);
+
+        if(activation>0.3){
+          ctx.fillStyle=layerColors[l]+'33';
+          ctx.beginPath();ctx.arc(x,y,r+3,0,Math.PI*2);ctx.fill();
+        }
+        ctx.fillStyle=layerColors[l];
+        ctx.globalAlpha=0.15+activation*0.85;
+        ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+        ctx.globalAlpha=1;
+      }
+      if(layerSizes[l]>maxShow[l]){
+        const y=pad+(H-2*pad)/(maxShow[l]+1)*(maxShow[l]+1);
+        ctx.fillStyle='#ccc';ctx.font='9px system-ui';ctx.textAlign='center';
+        ctx.fillText('+'+(layerSizes[l]-maxShow[l]),layerX[l],y);
+      }
+      ctx.fillStyle=layerColors[l];ctx.font='bold 10px system-ui';ctx.textAlign='center';
+      ctx.fillText(layerLabels[l],layerX[l],H-8);
+    }
+
+    // Math labels between layers
+    ctx.fillStyle='#bbb';ctx.font='9px system-ui';ctx.textAlign='center';
+    const ops=['W₁·x + b₁  →  ReLU','W₂·h₁ + b₂  →  ReLU','W₃·h₂ + b₃  →  Softmax'];
+    for(let l=0;l<3;l++){
+      const mx=(layerX[l]+layerX[l+1])/2;
+      ctx.fillText(ops[l],mx,18);
+    }
+
+    // Progress bar at bottom
+    const barY=H-22,barH=6,barW=W-40;
+    ctx.fillStyle='#E6EAF0';
+    ctx.beginPath();ctx.roundRect(20,barY,barW,barH,3);ctx.fill();
+    ctx.fillStyle=acc>95?'#1a8a45':acc>80?'#0078B2':'#7C4DFF';
+    ctx.beginPath();ctx.roundRect(20,barY,barW*progress,barH,3);ctx.fill();
+
+    // Update text
+    document.getElementById('nnTrainStatus').textContent=epoch<=20?`Epoch ${epoch}/20 — training...`:'✓ Training selesai!';
+    document.getElementById('nnTrainAcc').textContent=`Akurasi: ${acc.toFixed(1)}%`;
+    document.getElementById('nnTrainAcc').style.color=acc>95?'#1a8a45':'var(--blue)';
   }
 
-  // Simulate epochs
-  const epochs=20;
-  for(let e=1;e<=epochs;e++){
-    const loss=(2.3*Math.exp(-e*0.25)+0.01+Math.random()*0.02).toFixed(4);
-    const acc=Math.min(99.9,(60+40*(1-Math.exp(-e*0.3))+Math.random()*2)).toFixed(1);
-    const lr=(0.001*Math.pow(0.95,e)).toFixed(6);
-    const color=parseFloat(acc)>95?'#51cf66':parseFloat(acc)>80?'#fcc419':'#ff6b6b';
-    log.innerHTML+=`<div>Epoch ${String(e).padStart(2)}/20 | loss: ${loss} | acc: <span style="color:${color}">${acc}%</span> | lr: ${lr}</div>`;
-    log.scrollTop=log.scrollHeight;
-    await new Promise(r=>setTimeout(r,200));
+  // Animate 20 epochs
+  for(let e=1;e<=20;e++){
+    const progress=e/20;
+    const acc=Math.min(99.9,60+40*(1-Math.exp(-e*0.3))+Math.random()*1.5);
+    drawFrame(progress,e,acc);
+    await new Promise(r=>setTimeout(r,250));
   }
 
-  log.innerHTML+='<div style="color:#51cf66;font-weight:bold">\\n✓ Training complete! Accuracy: 99.9%</div>';
-  log.innerHTML+='<div style="color:#51cf66">Loading weights...</div>';
-  log.scrollTop=log.scrollHeight;
+  // Final frame
+  drawFrame(1,20,99.9);
+  await new Promise(r=>setTimeout(r,400));
 
-  // Load pre-trained weights (inline, no fetch needed)
-  try{
-    nnWeights=NN_PRETRAINED_WEIGHTS;
-    log.innerHTML+='<div style="color:#51cf66;font-weight:bold">✓ Model ready! Silakan gambar angka.</div>';
-  }catch(err){
-    log.innerHTML+='<div style="color:#ff6b6b">Error loading weights: '+err.message+'</div>';
-    btn.disabled=false;btn.textContent='🚀 Mulai Training!';
-    return;
-  }
-  log.scrollTop=log.scrollHeight;
+  // Load weights
+  nnWeights=NN_PRETRAINED_WEIGHTS;
 
-  await new Promise(r=>setTimeout(r,500));
+  document.getElementById('nnTrainStatus').innerHTML='<span style="color:#1a8a45;font-weight:700">✓ Model siap! Scroll ke bawah untuk menggambar angka.</span>';
+  await new Promise(r=>setTimeout(r,300));
+
   document.getElementById('nnPredictSection').style.display='block';
   document.getElementById('nnPredictSection').scrollIntoView({behavior:'smooth'});
-
-  // Init bars
   nnRenderBars(new Array(10).fill(0));
   nnDrawViz();
 }
