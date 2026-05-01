@@ -882,12 +882,7 @@ pgInit['detective']=()=>{
 // ============================================================
 document.getElementById('pg-magic').innerHTML = `
 <div class="pg-wrap">
-  <div class="pg-header"><h2>✨ Magic Square 4×4</h2><p>Isi angka, lalu saksikan keajaibannya</p></div>
-  <div class="pg-section">
-    <h3>Apa itu Magic Square?</h3>
-    <p>Magic Square adalah kotak berisi angka di mana <strong>jumlah setiap baris, kolom, diagonal, dan sub-kotak 2×2 semuanya sama</strong>. Angka ajaib ini disebut <em>magic constant</em>.</p>
-    <p style="margin-top:8px">Untuk magic square 4×4 klasik berisi angka 1–16, magic constant-nya adalah <strong>34</strong>. Ada <strong>880</strong> variasi unik!</p>
-  </div>
+  <div class="pg-header"><h2>✨ Magic Square 4×4</h2><p>Isi 16 angka, lalu klik Hitung</p></div>
 
   <div style="position:relative;display:inline-block;margin:20px auto;display:flex;justify-content:center">
     <div style="position:relative;display:inline-block;padding:30px 50px 40px 30px" id="msWrap">
@@ -906,16 +901,6 @@ document.getElementById('pg-magic').innerHTML = `
   <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
     <button onclick="msCalculate()" id="msBtnCalc" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:1.05rem;font-weight:700;cursor:pointer">🪄 Hitung!</button>
     <button onclick="msClear()" style="background:var(--bg);color:var(--gray);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.9rem;cursor:pointer">Kosongkan</button>
-  </div>
-
-  <div class="pg-section" style="margin-top:12px">
-    <h3>Coba Sendiri!</h3>
-    <ul>
-      <li>Isi 16 kotak dengan angka, lalu klik "Hitung!"</li>
-      <li>Perhatikan garis-garis yang muncul di tabel — setiap garis menunjukkan satu pengecekan</li>
-      <li>Bisakah kamu bikin semua jumlah sama?</li>
-      <li>Hint: coba angka 1–16 dengan pola tertentu...</li>
-    </ul>
   </div>
 </div>`;
 
