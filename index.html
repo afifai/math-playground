@@ -885,149 +885,233 @@ document.getElementById('pg-magic').innerHTML = `
   <div class="pg-header"><h2>✨ Magic Square 4×4</h2><p>Isi angka, lalu saksikan keajaibannya</p></div>
   <div class="pg-section">
     <h3>Apa itu Magic Square?</h3>
-    <p>Magic Square adalah kotak berisi angka di mana <strong>jumlah setiap baris, kolom, diagonal, dan sub-kotak 2×2 di pojok semuanya sama</strong>. Angka ajaib ini disebut <em>magic constant</em>.</p>
-    <p style="margin-top:8px">Untuk magic square 4×4 klasik berisi angka 1–16, magic constant-nya adalah <strong>34</strong>.</p>
+    <p>Magic Square adalah kotak berisi angka di mana <strong>jumlah setiap baris, kolom, diagonal, dan sub-kotak 2×2 semuanya sama</strong>. Angka ajaib ini disebut <em>magic constant</em>.</p>
+    <p style="margin-top:8px">Untuk magic square 4×4 klasik berisi angka 1–16, magic constant-nya adalah <strong>34</strong>. Ada <strong>880</strong> variasi unik!</p>
   </div>
 
-  <div style="display:flex;justify-content:center;margin:20px 0">
-    <table id="msTable" style="border-collapse:collapse">
-      <tr><td><input type="number" id="ms0" class="ms-cell"></td><td><input type="number" id="ms1" class="ms-cell"></td><td><input type="number" id="ms2" class="ms-cell"></td><td><input type="number" id="ms3" class="ms-cell"></td></tr>
-      <tr><td><input type="number" id="ms4" class="ms-cell"></td><td><input type="number" id="ms5" class="ms-cell"></td><td><input type="number" id="ms6" class="ms-cell"></td><td><input type="number" id="ms7" class="ms-cell"></td></tr>
-      <tr><td><input type="number" id="ms8" class="ms-cell"></td><td><input type="number" id="ms9" class="ms-cell"></td><td><input type="number" id="ms10" class="ms-cell"></td><td><input type="number" id="ms11" class="ms-cell"></td></tr>
-      <tr><td><input type="number" id="ms12" class="ms-cell"></td><td><input type="number" id="ms13" class="ms-cell"></td><td><input type="number" id="ms14" class="ms-cell"></td><td><input type="number" id="ms15" class="ms-cell"></td></tr>
-    </table>
+  <div style="position:relative;display:inline-block;margin:20px auto;display:flex;justify-content:center">
+    <div style="position:relative;display:inline-block" id="msWrap">
+      <table id="msTable" style="border-collapse:separate;border-spacing:6px;position:relative;z-index:2">
+        <tr><td><input type="number" id="ms0" class="ms-cell"></td><td><input type="number" id="ms1" class="ms-cell"></td><td><input type="number" id="ms2" class="ms-cell"></td><td><input type="number" id="ms3" class="ms-cell"></td></tr>
+        <tr><td><input type="number" id="ms4" class="ms-cell"></td><td><input type="number" id="ms5" class="ms-cell"></td><td><input type="number" id="ms6" class="ms-cell"></td><td><input type="number" id="ms7" class="ms-cell"></td></tr>
+        <tr><td><input type="number" id="ms8" class="ms-cell"></td><td><input type="number" id="ms9" class="ms-cell"></td><td><input type="number" id="ms10" class="ms-cell"></td><td><input type="number" id="ms11" class="ms-cell"></td></tr>
+        <tr><td><input type="number" id="ms12" class="ms-cell"></td><td><input type="number" id="ms13" class="ms-cell"></td><td><input type="number" id="ms14" class="ms-cell"></td><td><input type="number" id="ms15" class="ms-cell"></td></tr>
+      </table>
+      <canvas id="msCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none"></canvas>
+    </div>
   </div>
+
+  <div id="msVerdict" style="text-align:center;margin-bottom:16px;min-height:48px"></div>
 
   <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
-    <button onclick="msCalculate()" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .2s">🪄 Hitung!</button>
-    <button onclick="msFillClassic()" style="background:var(--bg);color:var(--dark);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.9rem;cursor:pointer">Isi Contoh (1–16)</button>
+    <button onclick="msCalculate()" id="msBtnCalc" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:1.05rem;font-weight:700;cursor:pointer">🪄 Hitung!</button>
     <button onclick="msClear()" style="background:var(--bg);color:var(--gray);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.9rem;cursor:pointer">Kosongkan</button>
   </div>
 
-  <div id="msResults" style="max-width:600px;margin:0 auto"></div>
-
-  <div class="pg-section" style="margin-top:20px">
+  <div class="pg-section" style="margin-top:12px">
     <h3>Coba Sendiri!</h3>
     <ul>
-      <li>Klik "Isi Contoh" untuk lihat magic square klasik 1–16</li>
-      <li>Klik "Hitung!" dan perhatikan semua jumlah = 34</li>
-      <li>Coba isi angka sendiri — bisakah kamu bikin magic square?</li>
-      <li>Fun fact: ada <strong>880</strong> magic square 4×4 yang berbeda (tidak termasuk rotasi dan refleksi)</li>
+      <li>Isi 16 kotak dengan angka, lalu klik "Hitung!"</li>
+      <li>Perhatikan garis-garis yang muncul di tabel — setiap garis menunjukkan satu pengecekan</li>
+      <li>Bisakah kamu bikin semua jumlah sama?</li>
+      <li>Hint: coba angka 1–16 dengan pola tertentu...</li>
     </ul>
   </div>
 </div>`;
 
-function msGetVals(){return Array.from({length:16},(_,i)=>{const v=document.getElementById('ms'+i).value;return v===''?NaN:Number(v);});}
-
-function msFillClassic(){
-  // Albrecht Dürer's magic square
-  const vals=[16,3,2,13,5,10,11,8,9,6,7,12,4,15,14,1];
-  vals.forEach((v,i)=>{document.getElementById('ms'+i).value=v;});
-  document.getElementById('msResults').innerHTML='';
-  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='';});
-}
+let msAnimating=false;
 
 function msClear(){
+  if(msAnimating) return;
   for(let i=0;i<16;i++) document.getElementById('ms'+i).value='';
-  document.getElementById('msResults').innerHTML='';
-  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='';});
+  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='';c.style.transform='';});
+  const cv=document.getElementById('msCanvas');if(cv){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
+  document.getElementById('msVerdict').innerHTML='';
+}
+
+function msCellCenter(idx){
+  const cell=document.getElementById('ms'+idx);
+  const wrap=document.getElementById('msWrap');
+  const wr=wrap.getBoundingClientRect();
+  const cr=cell.getBoundingClientRect();
+  return {x:cr.left-wr.left+cr.width/2, y:cr.top-wr.top+cr.height/2};
+}
+
+function msSetupCanvas(){
+  const cv=document.getElementById('msCanvas');
+  const wrap=document.getElementById('msWrap');
+  const wr=wrap.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  cv.width=wr.width*dpr; cv.height=wr.height*dpr;
+  cv.style.width=wr.width+'px'; cv.style.height=wr.height+'px';
+  const ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return ctx;
+}
+
+function msDrawLine(ctx,fromIdx,toIdx,color,width){
+  const a=msCellCenter(fromIdx),b=msCellCenter(toIdx);
+  ctx.strokeStyle=color;ctx.lineWidth=width||3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+}
+
+function msDrawRect(ctx,indices,color,width){
+  const pts=indices.map(i=>msCellCenter(i));
+  // Find bounding box of the cells and draw rounded rect around them
+  const cells=indices.map(i=>document.getElementById('ms'+i));
+  const wrap=document.getElementById('msWrap').getBoundingClientRect();
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  cells.forEach(c=>{
+    const r=c.getBoundingClientRect();
+    const x=r.left-wrap.left, y=r.top-wrap.top;
+    minX=Math.min(minX,x); minY=Math.min(minY,y);
+    maxX=Math.max(maxX,x+r.width); maxY=Math.max(maxY,y+r.height);
+  });
+  const pad=4;
+  ctx.strokeStyle=color;ctx.lineWidth=width||3;ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.roundRect(minX-pad,minY-pad,maxX-minX+pad*2,maxY-minY+pad*2,8);
+  ctx.stroke();
+}
+
+function msDrawSumBubble(ctx,idx,sum,color,side){
+  const wrap=document.getElementById('msWrap').getBoundingClientRect();
+  let x,y;
+  if(side==='right'){
+    const cell=document.getElementById('ms'+idx[idx.length-1]);
+    const cr=cell.getBoundingClientRect();
+    x=cr.right-wrap.left+14; y=cr.top-wrap.top+cr.height/2;
+  } else if(side==='bottom'){
+    const cell=document.getElementById('ms'+idx[idx.length-1]);
+    const cr=cell.getBoundingClientRect();
+    x=cr.left-wrap.left+cr.width/2; y=cr.bottom-wrap.top+14;
+  } else if(side==='topright'){
+    const cell=document.getElementById('ms'+idx[0]);
+    const cr=cell.getBoundingClientRect();
+    x=cr.right-wrap.left+14; y=cr.top-wrap.top-4;
+  } else if(side==='bottomleft'){
+    const cell=document.getElementById('ms'+idx[idx.length-1]);
+    const cr=cell.getBoundingClientRect();
+    x=cr.left-wrap.left-14; y=cr.bottom-wrap.top+4;
+  } else {
+    // center of group
+    const pts=idx.map(i=>msCellCenter(i));
+    x=pts.reduce((a,p)=>a+p.x,0)/pts.length;
+    y=pts.reduce((a,p)=>a+p.y,0)/pts.length;
+  }
+  // Bubble
+  const txt=String(sum);
+  ctx.font='bold 14px system-ui';
+  const tw=ctx.measureText(txt).width;
+  ctx.fillStyle=color;
+  ctx.beginPath();ctx.roundRect(x-tw/2-6,y-10,tw+12,22,6);ctx.fill();
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(txt,x,y+1);
+}
+
+async function msAnimateLine(ctx,fromIdx,toIdx,color,duration){
+  const a=msCellCenter(fromIdx),b=msCellCenter(toIdx);
+  const steps=Math.ceil(duration/16);
+  for(let i=0;i<=steps;i++){
+    const t=i/steps;
+    const cx=a.x+(b.x-a.x)*t, cy=a.y+(b.y-a.y)*t;
+    ctx.strokeStyle=color;ctx.lineWidth=3.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(cx,cy);ctx.stroke();
+    await new Promise(r=>requestAnimationFrame(r));
+  }
 }
 
 async function msCalculate(){
-  const vals=msGetVals();
+  const vals=Array.from({length:16},(_,i)=>{const v=document.getElementById('ms'+i).value;return v===''?NaN:Number(v);});
   if(vals.some(isNaN)){alert('Isi semua 16 kotak dengan angka!');return;}
+  if(msAnimating) return;
+  msAnimating=true;
+  document.getElementById('msBtnCalc').disabled=true;
 
-  // Reset styles
-  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';c.style.transition='all 0.4s';});
-  document.getElementById('msResults').innerHTML='';
+  // Reset
+  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';c.style.transform='';});
+  document.getElementById('msVerdict').innerHTML='';
+  const ctx=msSetupCanvas();
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
 
-  const g=(r,c)=>vals[r*4+c];
+  const colors=['#0078B2','#0078B2','#0078B2','#0078B2','#7C4DFF','#7C4DFF','#7C4DFF','#7C4DFF','#FF5E57','#FF5E57','#1a8a45','#1a8a45','#1a8a45','#1a8a45','#b07d00','#e05694'];
+
   const checks=[];
-
   // Rows
-  for(let r=0;r<4;r++){
-    const idx=[r*4,r*4+1,r*4+2,r*4+3];
-    checks.push({label:'Baris '+(r+1),idx,sum:idx.reduce((a,i)=>a+vals[i],0)});
-  }
+  for(let r=0;r<4;r++) checks.push({idx:[r*4,r*4+1,r*4+2,r*4+3],type:'row',label:'Baris '+(r+1)});
   // Columns
-  for(let c=0;c<4;c++){
-    const idx=[c,c+4,c+8,c+12];
-    checks.push({label:'Kolom '+(c+1),idx,sum:idx.reduce((a,i)=>a+vals[i],0)});
-  }
+  for(let c=0;c<4;c++) checks.push({idx:[c,c+4,c+8,c+12],type:'col',label:'Kolom '+(c+1)});
   // Diagonals
-  checks.push({label:'Diagonal ↘',idx:[0,5,10,15],sum:g(0,0)+g(1,1)+g(2,2)+g(3,3)});
-  checks.push({label:'Diagonal ↗',idx:[3,6,9,12],sum:g(0,3)+g(1,2)+g(2,1)+g(3,0)});
+  checks.push({idx:[0,5,10,15],type:'diag',label:'Diagonal ↘'});
+  checks.push({idx:[3,6,9,12],type:'diag',label:'Diagonal ↗'});
+  // Sub 2x2
+  checks.push({idx:[0,1,4,5],type:'sub',label:'Sub kiri-atas'});
+  checks.push({idx:[2,3,6,7],type:'sub',label:'Sub kanan-atas'});
+  checks.push({idx:[8,9,12,13],type:'sub',label:'Sub kiri-bawah'});
+  checks.push({idx:[10,11,14,15],type:'sub',label:'Sub kanan-bawah'});
+  // Center
+  checks.push({idx:[5,6,9,10],type:'sub',label:'Sub tengah'});
+  // Corners
+  checks.push({idx:[0,3,12,15],type:'corners',label:'4 Pojok'});
 
-  // 4 corner sub-squares 2x2
-  const subs=[
-    {label:'Sub 2×2 kiri-atas',idx:[0,1,4,5]},
-    {label:'Sub 2×2 kanan-atas',idx:[2,3,6,7]},
-    {label:'Sub 2×2 kiri-bawah',idx:[8,9,12,13]},
-    {label:'Sub 2×2 kanan-bawah',idx:[10,11,14,15]},
-  ];
-  subs.forEach(s=>{s.sum=s.idx.reduce((a,i)=>a+vals[i],0);checks.push(s);});
+  const allSums=checks.map(ch=>ch.idx.reduce((a,i)=>a+vals[i],0));
 
-  // Center 2x2
-  checks.push({label:'Sub 2×2 tengah',idx:[5,6,9,10],sum:g(1,1)+g(1,2)+g(2,1)+g(2,2)});
-
-  // 4 corners
-  checks.push({label:'4 Pojok',idx:[0,3,12,15],sum:g(0,0)+g(0,3)+g(3,0)+g(3,3)});
-
-  const colors=['#0078B2','#7C4DFF','#FF5E57','#1a8a45','#b07d00','#e05694'];
-  const allSums=checks.map(c=>c.sum);
-  const allSame=allSums.every(s=>s===allSums[0]);
-
-  const container=document.getElementById('msResults');
-
-  // Animate each check one by one
   for(let i=0;i<checks.length;i++){
     const ch=checks[i];
+    const sum=allSums[i];
     const color=colors[i%colors.length];
 
     // Highlight cells
-    document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';});
     ch.idx.forEach(idx=>{
       const cell=document.getElementById('ms'+idx);
-      cell.style.background=color+'22';
-      cell.style.color=color;
+      cell.style.background=color+'20';cell.style.color=color;cell.style.transform='scale(1.08)';
     });
 
-    // Add result row
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 14px;margin-bottom:4px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);opacity:0;transform:translateY(8px);transition:all 0.3s';
-    const isMagic=ch.sum===allSums[0]&&allSame;
-    row.innerHTML='<span style="font-size:.85rem;font-weight:600;color:'+color+'">'+ch.label+'</span>'
-      +'<span style="display:flex;align-items:center;gap:6px">'
-      +'<span style="font-family:monospace;font-size:.85rem;color:var(--dark)">'+ch.idx.map(j=>vals[j]).join(' + ')+' = </span>'
-      +'<span style="font-weight:800;font-size:1.1rem;color:'+color+'">'+ch.sum+'</span>'
-      +'</span>';
-    container.appendChild(row);
+    // Draw on canvas
+    if(ch.type==='row'){
+      await msAnimateLine(ctx,ch.idx[0],ch.idx[3],color,250);
+      msDrawSumBubble(ctx,ch.idx,sum,color,'right');
+    } else if(ch.type==='col'){
+      await msAnimateLine(ctx,ch.idx[0],ch.idx[3],color,250);
+      msDrawSumBubble(ctx,ch.idx,sum,color,'bottom');
+    } else if(ch.type==='diag'){
+      await msAnimateLine(ctx,ch.idx[0],ch.idx[3],color,300);
+      const side=ch.idx[0]===0?'topright':'bottomleft';
+      msDrawSumBubble(ctx,ch.idx,sum,color,side);
+    } else if(ch.type==='sub'||ch.type==='corners'){
+      msDrawRect(ctx,ch.idx,color,3);
+      msDrawSumBubble(ctx,ch.idx,sum,color,'center');
+      await new Promise(r=>setTimeout(r,200));
+    }
 
-    // Trigger animation
-    await new Promise(r=>setTimeout(r,50));
-    row.style.opacity='1';row.style.transform='translateY(0)';
+    await new Promise(r=>setTimeout(r,350));
 
-    await new Promise(r=>setTimeout(r,180));
+    // Un-highlight cells
+    ch.idx.forEach(idx=>{
+      const cell=document.getElementById('ms'+idx);
+      cell.style.background='';cell.style.color='var(--dark)';cell.style.transform='';
+    });
   }
-
-  // Reset cell highlight
-  document.querySelectorAll('.ms-cell').forEach(c=>{c.style.background='';c.style.color='var(--dark)';});
 
   // Final verdict
-  await new Promise(r=>setTimeout(r,200));
-  const verdict=document.createElement('div');
-  verdict.style.cssText='text-align:center;padding:16px;margin-top:12px;border-radius:12px;font-size:1.1rem;font-weight:700;opacity:0;transform:scale(0.9);transition:all 0.4s';
+  await new Promise(r=>setTimeout(r,300));
+  const allSame=allSums.every(s=>s===allSums[0]);
+  const vd=document.getElementById('msVerdict');
   if(allSame){
-    verdict.style.background='#1a8a4515';verdict.style.border='2px solid #1a8a45';verdict.style.color='#1a8a45';
-    verdict.innerHTML='🎉 MAGIC! Semua jumlah = <span style="font-size:1.4rem">'+allSums[0]+'</span>';
+    vd.innerHTML='<div style="display:inline-block;padding:14px 28px;border-radius:12px;background:#1a8a4512;border:2px solid #1a8a45;color:#1a8a45;font-size:1.2rem;font-weight:800;animation:popIn .4s ease">🎉 MAGIC! Semua jumlah = '+allSums[0]+'</div>';
+    // Celebrate — flash all cells green
+    document.querySelectorAll('.ms-cell').forEach((c,i)=>{
+      setTimeout(()=>{c.style.background='#1a8a4518';c.style.color='#1a8a45';c.style.transform='scale(1.1)';
+        setTimeout(()=>{c.style.transform='';},300);
+      },i*60);
+    });
   } else {
-    verdict.style.background='#FF5E5715';verdict.style.border='2px solid #FF5E57';verdict.style.color='#FF5E57';
     const unique=[...new Set(allSums)];
-    verdict.innerHTML='❌ Belum magic — ada '+unique.length+' nilai berbeda: '+unique.join(', ');
+    vd.innerHTML='<div style="display:inline-block;padding:14px 28px;border-radius:12px;background:#FF5E5712;border:2px solid #FF5E57;color:#FF5E57;font-size:1.1rem;font-weight:700;animation:popIn .4s ease">Belum magic — ada '+unique.length+' nilai berbeda: '+unique.join(', ')+'</div>';
   }
-  container.appendChild(verdict);
-  await new Promise(r=>setTimeout(r,50));
-  verdict.style.opacity='1';verdict.style.transform='scale(1)';
+
+  msAnimating=false;
+  document.getElementById('msBtnCalc').disabled=false;
 }
 
 pgInit['magic']=()=>{};
@@ -1035,16 +1119,16 @@ pgInit['magic']=()=>{};
 
 <style>
 .ms-cell{
-  width:clamp(50px,15vw,72px);height:clamp(50px,15vw,72px);
-  text-align:center;font-size:clamp(1.1rem,4vw,1.5rem);font-weight:700;
-  border:1.5px solid var(--border);border-radius:8px;
+  width:clamp(54px,16vw,76px);height:clamp(54px,16vw,76px);
+  text-align:center;font-size:clamp(1.2rem,4.5vw,1.6rem);font-weight:700;
+  border:2px solid var(--border);border-radius:10px;
   background:var(--white);color:var(--dark);outline:none;
-  transition:all 0.4s;
+  transition:all 0.3s ease;
   -moz-appearance:textfield;
 }
 .ms-cell::-webkit-inner-spin-button,.ms-cell::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .ms-cell:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0078B222}
-#msTable td{padding:3px}
+@keyframes popIn{0%{transform:scale(0.8);opacity:0}100%{transform:scale(1);opacity:1}}
 </style>
 </body>
 </html>
