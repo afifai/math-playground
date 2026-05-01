@@ -890,7 +890,7 @@ document.getElementById('pg-magic').innerHTML = `
   </div>
 
   <div style="position:relative;display:inline-block;margin:20px auto;display:flex;justify-content:center">
-    <div style="position:relative;display:inline-block;padding-right:50px;padding-bottom:40px" id="msWrap">
+    <div style="position:relative;display:inline-block;padding:30px 50px 40px 30px" id="msWrap">
       <table id="msTable" style="border-collapse:separate;border-spacing:6px;position:relative;z-index:2">
         <tr><td><input type="number" id="ms0" class="ms-cell"></td><td><input type="number" id="ms1" class="ms-cell"></td><td><input type="number" id="ms2" class="ms-cell"></td><td><input type="number" id="ms3" class="ms-cell"></td></tr>
         <tr><td><input type="number" id="ms4" class="ms-cell"></td><td><input type="number" id="ms5" class="ms-cell"></td><td><input type="number" id="ms6" class="ms-cell"></td><td><input type="number" id="ms7" class="ms-cell"></td></tr>
@@ -1076,8 +1076,7 @@ async function msCalculate(){
       msDrawSumBubble(ctx,ch.idx,sum,color,'bottom');
     } else if(ch.type==='diag'){
       await msAnimateLine(ctx,ch.idx[0],ch.idx[3],color,300);
-      const side=ch.idx[0]===0?'topright':'bottomleft';
-      msDrawSumBubble(ctx,ch.idx,sum,color,side);
+      msDrawSumBubble(ctx,ch.idx,sum,color,'right');
     } else if(ch.type==='sub'||ch.type==='corners'){
       msDrawRect(ctx,ch.idx,color,3);
       msDrawSumBubble(ctx,ch.idx,sum,color,'center');
