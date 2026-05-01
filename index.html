@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Playground — NgodingAI</title>
+<meta name="description" content="Eksplorasi matematika interaktif — Seminar GEMA 2026">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📐</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0078B2;--purple:#7C4DFF;--red:#FF5E57;--dark:#2F2F2F;--gray:#667085;--border:#E6EAF0;--bg:#F3F6F9;--white:#fff;--green:#1a8a45}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--white);color:var(--dark);min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+
+/* ---- NAV ---- */
+nav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:100}
+nav .left{display:flex;align-items:center;gap:12px}
+nav img{height:28px}
+nav .title{font-size:1rem;font-weight:700;color:var(--blue)}
+nav .back{display:none;padding:6px 14px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);color:var(--gray);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+nav .back:hover{border-color:var(--blue);color:var(--blue)}
+nav .back.show{display:inline-flex}
+
+/* ---- LANDING ---- */
+.landing{padding:32px 20px;max-width:900px;margin:0 auto}
+.landing h1{font-size:clamp(1.5rem,5vw,2.2rem);color:var(--dark);margin-bottom:4px}
+.landing .sub{font-size:1rem;color:var(--gray);margin-bottom:32px}
+.landing .event{display:inline-block;padding:4px 14px;border-radius:20px;background:var(--blue);color:var(--white);font-size:.8rem;font-weight:600;margin-bottom:24px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 4px 16px #0078B215}
+.card .emoji{font-size:2rem;margin-bottom:8px}
+.card h3{font-size:1.05rem;color:var(--dark);margin-bottom:6px}
+.card p{font-size:.85rem;color:var(--gray);line-height:1.5}
+.card .tag{position:absolute;top:12px;right:12px;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.tag-aljabar{background:#0078B218;color:var(--blue)}
+.tag-kalkulus{background:#7C4DFF18;color:var(--purple)}
+.tag-trigonometri{background:#FF5E5718;color:var(--red)}
+.tag-statistik{background:#1a8a4518;color:var(--green)}
+
+.landing-footer{text-align:center;margin-top:40px;padding:20px;color:#bbb;font-size:.75rem}
+
+/* ---- PLAYGROUND CONTAINER ---- */
+.playground{display:none;padding:0;min-height:calc(100vh - 54px)}
+.playground.active{display:block}
+.landing.hidden{display:none}
+
+/* ---- SHARED PLAYGROUND STYLES ---- */
+.pg-wrap{max-width:900px;margin:0 auto;padding:16px}
+.pg-header{text-align:center;padding:16px 0 8px}
+.pg-header h2{font-size:1.4rem;color:var(--dark)}
+.pg-header p{font-size:.85rem;color:var(--gray);margin-top:4px}
+.pg-section{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.pg-section h3{font-size:.95rem;color:var(--blue);margin-bottom:8px;font-weight:700}
+.pg-section p,.pg-section li{font-size:.85rem;color:var(--dark);line-height:1.6}
+.pg-section ul{padding-left:20px}
+.pg-section .formula{font-family:'Courier New',monospace;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:8px 14px;display:inline-block;margin:8px 0;font-size:1rem;color:var(--blue);font-weight:600}
+.canvas-box{background:var(--white);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;position:relative;margin-bottom:16px}
+.canvas-box canvas{width:100%;display:block}
+.canvas-hint{position:absolute;bottom:6px;right:10px;font-size:.65rem;color:#ccc;pointer-events:none}
+
+/* ---- SLIDER STYLES ---- */
+.sliders-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.sg{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px}
+.sg .sg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:600;font-size:.9rem}
+.sg input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:3px;background:#DDE3EA;outline:none}
+.sg input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 3px #0002}
+.sg-btns{display:flex;justify-content:center;gap:4px;margin-top:6px}
+.sg-btns button{background:var(--white);color:var(--gray);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:.75rem;cursor:pointer}
+.sg-btns button:hover{border-color:var(--blue);color:var(--blue)}
+.presets-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px}
+.presets-row button{background:var(--white);color:var(--dark);border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.presets-row button:hover{border-color:var(--blue);color:var(--blue)}
+
+/* ---- PROPS DISPLAY ---- */
+.props-bar{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:center}
+.props-bar .eq{font-size:clamp(1.2rem,4vw,1.8rem);font-weight:700;margin-bottom:6px}
+.props-bar .eq .ca{color:var(--red)}.props-bar .eq .cb{color:var(--green)}.props-bar .eq .cc{color:var(--blue)}
+.props-bar .meta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:.8rem;color:var(--gray)}
+.props-bar .meta strong{color:var(--dark)}
+.ptag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:600}
+.ptag-real{background:#1a8a4520;color:var(--green)}
+.ptag-kembar{background:#b07d0020;color:#b07d00}
+.ptag-imajiner{background:#FF5E5720;color:var(--red)}
+
+/* Color helpers for sliders */
+.c-red{color:var(--red)}.c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-purple{color:var(--purple)}
+.bg-red::-webkit-slider-thumb{background:var(--red)}.bg-green::-webkit-slider-thumb{background:var(--green)}.bg-blue::-webkit-slider-thumb{background:var(--blue)}.bg-purple::-webkit-slider-thumb{background:var(--purple)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="left">
+    <img src="logo.png" alt="NgodingAI">
+    <span class="title">Math Playground</span>
+  </div>
+  <button class="back" id="btnBack" onclick="goHome()">Kembali</button>
+</nav>
+
+<!-- ============ LANDING ============ -->
+<div class="landing" id="landing">
+  <span class="event">Seminar GEMA 2026 · Universitas Indraprasta PGRI</span>
+  <h1>Eksplorasi Matematika Interaktif</h1>
+  <p class="sub">Pilih topik di bawah, geser slider, dan lihat matematika bergerak. Dibuat dengan AI.</p>
+
+  <div class="cards" id="cardContainer"></div>
+
+  <div class="landing-footer">
+    NgodingAI · "Data. AI. Done." · math.ngoding.ai
+  </div>
+</div>
+
+<!-- ============ PLAYGROUNDS ============ -->
+<div class="playground" id="pg-kuadrat"></div>
+<div class="playground" id="pg-linear"></div>
+<div class="playground" id="pg-trigonometri"></div>
+<div class="playground" id="pg-eksponen"></div>
+<div class="playground" id="pg-statistik"></div>
+<div class="playground" id="pg-detective"></div>
+
+<script>
+// ============================================================
+// PLAYGROUND DEFINITIONS
+// ============================================================
+const playgrounds = [
+  {
+    id: 'kuadrat',
+    emoji: '📐',
+    title: 'Fungsi Kuadrat',
+    desc: 'Eksplorasi parabola y = ax² + bx + c. Geser koefisien, lihat bagaimana diskriminan, akar, dan titik puncak berubah.',
+    tag: 'Aljabar', tagClass: 'tag-aljabar',
+  },
+  {
+    id: 'linear',
+    emoji: '📏',
+    title: 'Fungsi Linear',
+    desc: 'Pahami y = mx + c secara visual. Ubah gradien dan intercept, lihat garis bergerak.',
+    tag: 'Aljabar', tagClass: 'tag-aljabar',
+  },
+  {
+    id: 'trigonometri',
+    emoji: '🌊',
+    title: 'Fungsi Trigonometri',
+    desc: 'Mainkan amplitudo, frekuensi, dan fase pada y = A·sin(Bx + C) + D.',
+    tag: 'Trigonometri', tagClass: 'tag-trigonometri',
+  },
+  {
+    id: 'eksponen',
+    emoji: '🚀',
+    title: 'Fungsi Eksponensial & Logaritma',
+    desc: 'Bandingkan pertumbuhan eksponensial y = a·bˣ dengan logaritma y = a·log(x).',
+    tag: 'Kalkulus', tagClass: 'tag-kalkulus',
+  },
+  {
+    id: 'statistik',
+    emoji: '🎲',
+    title: 'Lempar Dadu & Central Limit Theorem',
+    desc: 'Lempar 1 dadu → rata. Lempar 30 dadu → bell curve! Simulasi visual kenapa distribusi normal ada di mana-mana.',
+    tag: 'Statistik', tagClass: 'tag-statistik',
+  },
+  {
+    id: 'detective',
+    emoji: '🔍',
+    title: 'Graph Detective — AI Tebak Grafik',
+    desc: 'Gambar grafik di kertas, foto, lalu AI coba tebak persamaannya. Siapa lebih pintar?',
+    tag: 'AI + Math', tagClass: 'tag-kalkulus',
+  },
+];
+
+// ============================================================
+// RENDER CARDS
+// ============================================================
+const cardContainer = document.getElementById('cardContainer');
+playgrounds.forEach(pg => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<span class="tag ${pg.tagClass}">${pg.tag}</span><div class="emoji">${pg.emoji}</div><h3>${pg.title}</h3><p>${pg.desc}</p>`;
+  card.addEventListener('click', () => openPlayground(pg.id));
+  cardContainer.appendChild(card);
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentPg = null;
+function openPlayground(id) {
+  document.getElementById('landing').classList.add('hidden');
+  document.querySelectorAll('.playground').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('pg-' + id);
+  el.classList.add('active');
+  document.getElementById('btnBack').classList.add('show');
+  currentPg = id;
+  if (pgInit[id]) pgInit[id]();
+  window.scrollTo(0, 0);
+}
+function goHome() {
+  document.getElementById('landing').classList.remove('hidden');
+  document.querySelectorAll('.playground').forEach(el => el.classList.remove('active'));
+  document.getElementById('btnBack').classList.remove('show');
+  currentPg = null;
+}
+
+// Handle browser back
+window.addEventListener('hashchange', () => {
+  const h = location.hash.replace('#', '');
+  if (h && pgInit[h]) openPlayground(h);
+  else goHome();
+});
+if (location.hash) {
+  const h = location.hash.replace('#', '');
+  if (pgInit && pgInit[h]) openPlayground(h);
+}
+
+// ============================================================
+// SHARED CANVAS HELPERS
+// ============================================================
+function setupCanvas(canvasId) {
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  function resize() {
+    const r = c.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    c.width = r.width * dpr; c.height = r.height * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    c._w = r.width; c._h = r.height;
+  }
+  resize();
+  return { c, ctx, resize };
+}
+
+function drawGrid(ctx, W, H, viewX, viewY, scale) {
+  const m2s = (mx,my) => [W/2+(mx-viewX)*scale, H/2-(my-viewY)*scale];
+  const s2m = (sx,sy) => [(sx-W/2)/scale+viewX, -(sy-H/2)/scale+viewY];
+  const gs = gridStep(scale);
+  const [minX] = s2m(0,0), [maxX, minY] = s2m(W,H), [, maxY] = s2m(0,0);
+  ctx.fillStyle = '#FAFBFC'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = '#E6EAF0'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let gx=Math.floor(minX/gs)*gs; gx<=maxX; gx+=gs) { const [sx]=m2s(gx,0); ctx.moveTo(sx,0); ctx.lineTo(sx,H); }
+  for (let gy=Math.floor(minY/gs)*gs; gy<=maxY; gy+=gs) { const [,sy]=m2s(0,gy); ctx.moveTo(0,sy); ctx.lineTo(W,sy); }
+  ctx.stroke();
+  const [axX]=m2s(0,0), [,axY]=m2s(0,0);
+  ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5; ctx.beginPath();
+  ctx.moveTo(axX,0); ctx.lineTo(axX,H); ctx.moveTo(0,axY); ctx.lineTo(W,axY); ctx.stroke();
+  ctx.fillStyle = '#aaa'; ctx.font = '10px system-ui';
+  ctx.textAlign = 'center';
+  for (let gx=Math.floor(minX/gs)*gs; gx<=maxX; gx+=gs) { if(Math.abs(gx)<.001) continue; const [sx]=m2s(gx,0); ctx.fillText(fmt(gx),sx,axY+13); }
+  ctx.textAlign = 'right';
+  for (let gy=Math.floor(minY/gs)*gs; gy<=maxY; gy+=gs) { if(Math.abs(gy)<.001) continue; const [,sy]=m2s(0,gy); ctx.fillText(fmt(gy),axX-5,sy+4); }
+  return { m2s, s2m, gs, minX, maxX, minY, maxY, axX, axY };
+}
+
+function gridStep(s) { const i=80/s,m=Math.pow(10,Math.floor(Math.log10(i))),r=i/m; return r<=1.5?m:r<=3.5?2*m:r<=7.5?5*m:10*m; }
+function fmt(n) { return parseFloat(n.toFixed(2)).toString(); }
+
+function plotFn(ctx, fn, W, H, m2s, s2m, color, lineWidth) {
+  ctx.strokeStyle = color; ctx.lineWidth = lineWidth || 2.5;
+  ctx.shadowColor = color; ctx.shadowBlur = 4;
+  ctx.beginPath(); let first = true, prevSy = null;
+  for (let sx = -2; sx <= W+2; sx++) {
+    const [mx] = s2m(sx, 0);
+    let my; try { my = fn(mx); } catch { first=true; continue; }
+    if (!isFinite(my)||isNaN(my)) { first=true; continue; }
+    const [,sy] = m2s(mx, my);
+    if (prevSy!==null && Math.abs(sy-prevSy)>H*2) { first=true; prevSy=sy; continue; }
+    if (sy<-1000||sy>H+1000) { first=true; prevSy=sy; continue; }
+    if (first) { ctx.moveTo(sx,sy); first=false; } else ctx.lineTo(sx,sy);
+    prevSy = sy;
+  }
+  ctx.stroke(); ctx.shadowBlur = 0;
+}
+
+function addDrag(canvas, state, drawFn) {
+  let dragging=false, sx, sy, vx, vy;
+  canvas.style.cursor = 'grab';
+  canvas.addEventListener('mousedown', e => { dragging=true; sx=e.clientX; sy=e.clientY; vx=state.viewX; vy=state.viewY; canvas.style.cursor='grabbing'; });
+  window.addEventListener('mousemove', e => { if(!dragging) return; state.viewX=vx-(e.clientX-sx)/state.scale; state.viewY=vy+(e.clientY-sy)/state.scale; drawFn(); });
+  window.addEventListener('mouseup', () => { dragging=false; canvas.style.cursor='grab'; });
+  canvas.addEventListener('touchstart', e => { if(e.touches.length===1){dragging=true;sx=e.touches[0].clientX;sy=e.touches[0].clientY;vx=state.viewX;vy=state.viewY;} }, {passive:true});
+  canvas.addEventListener('touchmove', e => { if(!dragging||e.touches.length!==1) return; state.viewX=vx-(e.touches[0].clientX-sx)/state.scale; state.viewY=vy+(e.touches[0].clientY-sy)/state.scale; drawFn(); }, {passive:true});
+  canvas.addEventListener('touchend', () => { dragging=false; });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); state.scale*=e.deltaY>0?.9:1.1; state.scale=Math.max(5,Math.min(500,state.scale)); drawFn(); }, {passive:false});
+}
+
+// ============================================================
+// PLAYGROUND INITIALIZERS
+// ============================================================
+const pgInit = {};
+</script>
+<script>
+// ============================================================
+// 1. FUNGSI KUADRAT
+// ============================================================
+document.getElementById('pg-kuadrat').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>📐 Fungsi Kuadrat</h2><p>Eksplorasi y = ax² + bx + c</p></div>
+  <div class="pg-section">
+    <h3>Apa itu Fungsi Kuadrat?</h3>
+    <p>Fungsi kuadrat adalah fungsi polinomial berderajat 2 dengan bentuk umum:</p>
+    <div class="formula">y = ax² + bx + c</div>
+    <ul>
+      <li><strong>a</strong> menentukan arah dan lebar parabola (a &gt; 0 buka ke atas, a &lt; 0 buka ke bawah)</li>
+      <li><strong>b</strong> menggeser posisi titik puncak secara horizontal</li>
+      <li><strong>c</strong> adalah titik potong dengan sumbu y (y-intercept)</li>
+    </ul>
+    <p style="margin-top:8px"><strong>Diskriminan D = b² - 4ac</strong> menentukan jumlah akar: D &gt; 0 (2 akar real), D = 0 (akar kembar), D &lt; 0 (tanpa akar real).</p>
+  </div>
+  <div class="props-bar" id="kProps">
+    <div class="eq" id="kEq">y = <span class="ca">1</span>x² + <span class="cb">0</span>x + <span class="cc">0</span></div>
+    <div class="meta" id="kMeta"></div>
+  </div>
+  <div class="canvas-box" style="height:340px"><canvas id="kCanvas"></canvas><div class="canvas-hint">drag · scroll zoom</div></div>
+  <div class="sliders-row">
+    <div class="sg"><div class="sg-top"><span class="c-red">a</span><span class="c-red" id="kVA">1.0</span></div><input type="range" id="kA" class="bg-red" min="-5" max="5" step="0.1" value="1"><div class="sg-btns"><button onclick="kSet('A',-5)">-5</button><button onclick="kSet('A',-1)">-1</button><button onclick="kSet('A',0)">0</button><button onclick="kSet('A',1)">1</button><button onclick="kSet('A',5)">5</button></div></div>
+    <div class="sg"><div class="sg-top"><span class="c-green">b</span><span class="c-green" id="kVB">0.0</span></div><input type="range" id="kB" class="bg-green" min="-10" max="10" step="0.1" value="0"><div class="sg-btns"><button onclick="kSet('B',-5)">-5</button><button onclick="kSet('B',0)">0</button><button onclick="kSet('B',5)">5</button></div></div>
+    <div class="sg"><div class="sg-top"><span class="c-blue">c</span><span class="c-blue" id="kVC">0.0</span></div><input type="range" id="kC" class="bg-blue" min="-10" max="10" step="0.1" value="0"><div class="sg-btns"><button onclick="kSet('C',-5)">-5</button><button onclick="kSet('C',0)">0</button><button onclick="kSet('C',5)">5</button></div></div>
+  </div>
+  <div class="presets-row">
+    <button onclick="kPreset(1,0,0)">Parabola Dasar</button><button onclick="kPreset(-1,0,0)">Terbalik</button>
+    <button onclick="kPreset(1,0,-4)">2 Akar Real</button><button onclick="kPreset(1,-6,9)">Akar Kembar</button>
+    <button onclick="kPreset(1,0,4)">Tanpa Akar Real</button><button onclick="kPreset(0.5,-3,2)">Landai</button>
+  </div>
+  <div class="pg-section">
+    <h3>Coba Sendiri!</h3>
+    <ul>
+      <li>Geser <strong>a</strong> ke negatif — apa yang terjadi pada parabola?</li>
+      <li>Bisakah kamu membuat D = 0 tepat? (Hint: coba a=1, b=-6, c=9)</li>
+      <li>Apa yang terjadi kalau a = 0? Masih fungsi kuadrat?</li>
+    </ul>
+  </div>
+</div>`;
+
+const kState = { viewX:0, viewY:0, scale:40 };
+let kA=1, kB=0, kC=0, kSetup=false;
+
+function kSet(name, val) { document.getElementById('k'+name).value=val; kUpdate(); }
+function kPreset(a,b,c) { document.getElementById('kA').value=a; document.getElementById('kB').value=b; document.getElementById('kC').value=c; kUpdate(); }
+
+function kUpdate() {
+  kA=parseFloat(document.getElementById('kA').value);
+  kB=parseFloat(document.getElementById('kB').value);
+  kC=parseFloat(document.getElementById('kC').value);
+  document.getElementById('kVA').textContent=fmt(kA);
+  document.getElementById('kVB').textContent=fmt(kB);
+  document.getElementById('kVC').textContent=fmt(kC);
+  // Equation display
+  const bS=kB>=0?'+':'−', cS=kC>=0?'+':'−';
+  document.getElementById('kEq').innerHTML=`y = <span class="ca">${fmt(kA)}</span>x² ${bS} <span class="cb">${fmt(Math.abs(kB))}</span>x ${cS} <span class="cc">${fmt(Math.abs(kC))}</span>`;
+  // Properties
+  const meta = document.getElementById('kMeta');
+  if (Math.abs(kA)<.001) { meta.innerHTML='<span>Bukan fungsi kuadrat (a=0)</span>'; }
+  else {
+    const D=kB*kB-4*kA*kC, vx=-kB/(2*kA), vy=kA*vx*vx+kB*vx+kC;
+    let rootH='', tagH='';
+    if(D>0.001){const x1=(-kB+Math.sqrt(D))/(2*kA),x2=(-kB-Math.sqrt(D))/(2*kA);rootH=`<span>Akar: <strong>x₁=${fmt(x1)}, x₂=${fmt(x2)}</strong></span>`;tagH='<span class="ptag ptag-real">D&gt;0 · 2 Akar</span>';}
+    else if(Math.abs(D)<=.001){rootH=`<span>Akar kembar: <strong>x=${fmt(-kB/(2*kA))}</strong></span>`;tagH='<span class="ptag ptag-kembar">D=0 · Kembar</span>';}
+    else{rootH='<span>Tanpa akar real</span>';tagH='<span class="ptag ptag-imajiner">D&lt;0 · Imajiner</span>';}
+    meta.innerHTML=`<span>D=<strong>${fmt(D)}</strong></span>${tagH}<span>Puncak: <strong>(${fmt(vx)},${fmt(vy)})</strong></span><span>${kA>0?'Buka atas':'Buka bawah'}</span>${rootH}`;
+  }
+  kDraw();
+}
+
+function kDraw() {
+  const cv = document.getElementById('kCanvas'); if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const r = cv.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio||1;
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height;
+  const g = drawGrid(ctx,W,H,kState.viewX,kState.viewY,kState.scale);
+  if(Math.abs(kA)>=.001) {
+    plotFn(ctx, x=>kA*x*x+kB*x+kC, W, H, g.m2s, g.s2m, '#0078B2', 2.5);
+    const vx=-kB/(2*kA), vy=kA*vx*vx+kB*vx+kC, [svx,svy]=g.m2s(vx,vy);
+    ctx.fillStyle='#7C4DFF'; ctx.beginPath(); ctx.arc(svx,svy,5,0,Math.PI*2); ctx.fill();
+    ctx.font='bold 11px system-ui'; ctx.textAlign='left'; ctx.fillText(`(${fmt(vx)},${fmt(vy)})`,svx+8,svy-6);
+    const D=kB*kB-4*kA*kC; ctx.fillStyle='#1a8a45';
+    if(D>=-0.001){const roots=[];if(D>0.001){roots.push((-kB+Math.sqrt(D))/(2*kA));roots.push((-kB-Math.sqrt(D))/(2*kA));}else roots.push(-kB/(2*kA));
+    roots.forEach(rx=>{const[sx,sy]=g.m2s(rx,0);ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fill();});}
+    ctx.strokeStyle='#7C4DFF33';ctx.lineWidth=1;ctx.setLineDash([5,3]);ctx.beginPath();ctx.moveTo(svx,0);ctx.lineTo(svx,H);ctx.stroke();ctx.setLineDash([]);
+  } else { plotFn(ctx, x=>kB*x+kC, W, H, g.m2s, g.s2m, '#0078B2', 2.5); }
+}
+
+pgInit['kuadrat'] = () => {
+  if(!kSetup) {
+    ['kA','kB','kC'].forEach(id => document.getElementById(id).addEventListener('input', kUpdate));
+    addDrag(document.getElementById('kCanvas'), kState, kDraw);
+    window.addEventListener('resize', () => { if(currentPg==='kuadrat') kDraw(); });
+    kSetup = true;
+  }
+  kUpdate();
+};
+
+// ============================================================
+// 2. FUNGSI LINEAR
+// ============================================================
+document.getElementById('pg-linear').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>📏 Fungsi Linear</h2><p>Eksplorasi y = mx + c</p></div>
+  <div class="pg-section">
+    <h3>Apa itu Fungsi Linear?</h3>
+    <p>Fungsi linear menghasilkan garis lurus pada grafik:</p>
+    <div class="formula">y = mx + c</div>
+    <ul>
+      <li><strong>m</strong> (gradien/slope) — kemiringan garis. m &gt; 0 naik, m &lt; 0 turun, m = 0 horizontal</li>
+      <li><strong>c</strong> (y-intercept) — titik potong garis dengan sumbu y</li>
+    </ul>
+    <p style="margin-top:8px">Gradien = perubahan y / perubahan x. Jika m = 2, artinya setiap x bertambah 1, y bertambah 2.</p>
+  </div>
+  <div class="props-bar"><div class="eq" id="lEq">y = <span class="ca">1</span>x + <span class="cc">0</span></div><div class="meta" id="lMeta"></div></div>
+  <div class="canvas-box" style="height:340px"><canvas id="lCanvas"></canvas><div class="canvas-hint">drag · scroll zoom</div></div>
+  <div class="sliders-row">
+    <div class="sg"><div class="sg-top"><span class="c-red">m (gradien)</span><span class="c-red" id="lVM">1.0</span></div><input type="range" id="lM" class="bg-red" min="-5" max="5" step="0.1" value="1"><div class="sg-btns"><button onclick="lSet('M',-2)">-2</button><button onclick="lSet('M',-1)">-1</button><button onclick="lSet('M',0)">0</button><button onclick="lSet('M',1)">1</button><button onclick="lSet('M',2)">2</button></div></div>
+    <div class="sg"><div class="sg-top"><span class="c-blue">c (intercept)</span><span class="c-blue" id="lVC">0.0</span></div><input type="range" id="lC" class="bg-blue" min="-10" max="10" step="0.1" value="0"><div class="sg-btns"><button onclick="lSet('C',-5)">-5</button><button onclick="lSet('C',0)">0</button><button onclick="lSet('C',5)">5</button></div></div>
+  </div>
+  <div class="pg-section"><h3>Coba Sendiri!</h3><ul><li>Apa yang terjadi kalau m = 0?</li><li>Bagaimana cara membuat garis yang tegak lurus dengan y = 2x?</li><li>Dua garis sejajar punya gradien yang sama — buktikan!</li></ul></div>
+</div>`;
+
+const lState = { viewX:0, viewY:0, scale:40 };
+let lM=1, lC=0, lSetup=false;
+function lSet(name,val){document.getElementById('l'+name).value=val;lUpdate();}
+function lUpdate(){
+  lM=parseFloat(document.getElementById('lM').value); lC=parseFloat(document.getElementById('lC').value);
+  document.getElementById('lVM').textContent=fmt(lM); document.getElementById('lVC').textContent=fmt(lC);
+  const cS=lC>=0?'+':'−';
+  document.getElementById('lEq').innerHTML=`y = <span class="ca">${fmt(lM)}</span>x ${cS} <span class="cc">${fmt(Math.abs(lC))}</span>`;
+  const xInt = lM!==0 ? fmt(-lC/lM) : '∞';
+  document.getElementById('lMeta').innerHTML=`<span>Gradien: <strong>${fmt(lM)}</strong></span><span>Y-intercept: <strong>(0, ${fmt(lC)})</strong></span><span>X-intercept: <strong>(${xInt}, 0)</strong></span><span>${lM>0?'Naik ↗':lM<0?'Turun ↘':'Horizontal →'}</span>`;
+  lDraw();
+}
+function lDraw(){
+  const cv=document.getElementById('lCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'), r=cv.parentElement.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height, g=drawGrid(ctx,W,H,lState.viewX,lState.viewY,lState.scale);
+  plotFn(ctx, x=>lM*x+lC, W, H, g.m2s, g.s2m, '#0078B2', 2.5);
+  // Y-intercept dot
+  const [ix,iy]=g.m2s(0,lC); ctx.fillStyle='#7C4DFF'; ctx.beginPath(); ctx.arc(ix,iy,5,0,Math.PI*2); ctx.fill();
+  // X-intercept dot
+  if(Math.abs(lM)>0.001){const xr=-lC/lM,[rx,ry]=g.m2s(xr,0);ctx.fillStyle='#1a8a45';ctx.beginPath();ctx.arc(rx,ry,5,0,Math.PI*2);ctx.fill();}
+  // Slope triangle
+  if(Math.abs(lM)>0.001){
+    const x0=0,y0=lC,x1=1,y1=lM+lC;
+    const [sx0,sy0]=g.m2s(x0,y0),[sx1,sy1]=g.m2s(x1,y0),[sx2,sy2]=g.m2s(x1,y1);
+    ctx.strokeStyle='#FF5E57'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(sx0,sy0); ctx.lineTo(sx1,sy1); ctx.lineTo(sx2,sy2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#FF5E57'; ctx.font='bold 10px system-ui'; ctx.textAlign='center';
+    ctx.fillText('1',(sx0+sx1)/2,sy0+14); ctx.fillText(fmt(lM),sx1+14,(sy1+sy2)/2);
+  }
+}
+pgInit['linear'] = () => {
+  if(!lSetup){['lM','lC'].forEach(id=>document.getElementById(id).addEventListener('input',lUpdate));addDrag(document.getElementById('lCanvas'),lState,lDraw);window.addEventListener('resize',()=>{if(currentPg==='linear')lDraw();});lSetup=true;}
+  lUpdate();
+};
+</script>
+<script>
+// ============================================================
+// 3. TRIGONOMETRI
+// ============================================================
+document.getElementById('pg-trigonometri').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>🌊 Fungsi Trigonometri</h2><p>Eksplorasi y = A·sin(Bx + C) + D</p></div>
+  <div class="pg-section">
+    <h3>Apa itu Fungsi Sinus?</h3>
+    <p>Fungsi sinus menghasilkan gelombang periodik:</p>
+    <div class="formula">y = A · sin(Bx + C) + D</div>
+    <ul>
+      <li><strong>A</strong> (amplitudo) — tinggi gelombang dari garis tengah</li>
+      <li><strong>B</strong> (frekuensi) — berapa banyak gelombang dalam 2π. Periode = 2π/|B|</li>
+      <li><strong>C</strong> (fase) — menggeser gelombang ke kiri/kanan</li>
+      <li><strong>D</strong> (vertikal shift) — menggeser gelombang ke atas/bawah</li>
+    </ul>
+  </div>
+  <div class="props-bar"><div class="eq" id="tEq">y = <span class="ca">1</span>·sin(<span class="cb">1</span>x + <span class="cc">0</span>) + <span class="c-purple">0</span></div><div class="meta" id="tMeta"></div></div>
+  <div class="canvas-box" style="height:340px"><canvas id="tCanvas"></canvas><div class="canvas-hint">drag · scroll zoom</div></div>
+  <div class="sliders-row">
+    <div class="sg"><div class="sg-top"><span class="c-red">A (amplitudo)</span><span class="c-red" id="tVA">1.0</span></div><input type="range" id="tA" class="bg-red" min="-3" max="3" step="0.1" value="1"></div>
+    <div class="sg"><div class="sg-top"><span class="c-green">B (frekuensi)</span><span class="c-green" id="tVB">1.0</span></div><input type="range" id="tB" class="bg-green" min="0.1" max="5" step="0.1" value="1"></div>
+    <div class="sg"><div class="sg-top"><span class="c-blue">C (fase)</span><span class="c-blue" id="tVC">0.0</span></div><input type="range" id="tC" class="bg-blue" min="-6.28" max="6.28" step="0.1" value="0"></div>
+    <div class="sg"><div class="sg-top"><span class="c-purple">D (shift)</span><span class="c-purple" id="tVD">0.0</span></div><input type="range" id="tD" class="bg-purple" min="-3" max="3" step="0.1" value="0"></div>
+  </div>
+  <div class="presets-row">
+    <button onclick="tPreset(1,1,0,0)">Sinus Dasar</button><button onclick="tPreset(2,1,0,0)">Amplitudo 2</button>
+    <button onclick="tPreset(1,2,0,0)">Frekuensi 2</button><button onclick="tPreset(1,1,1.57,0)">Fase π/2 (= Cosinus)</button>
+    <button onclick="tPreset(1,1,0,1)">Shift +1</button><button onclick="tPreset(-1,3,0,0)">Terbalik Cepat</button>
+  </div>
+  <div class="pg-section"><h3>Coba Sendiri!</h3><ul><li>Bagaimana cara mengubah sin menjadi cos? (Hint: geser fase C)</li><li>Apa yang terjadi kalau amplitudo negatif?</li><li>Bisakah kamu membuat gelombang yang sangat rapat?</li></ul></div>
+</div>`;
+
+const tState = { viewX:0, viewY:0, scale:40 };
+let tA=1,tB=1,tC=0,tD=0,tSetup=false;
+function tPreset(a,b,c,d){document.getElementById('tA').value=a;document.getElementById('tB').value=b;document.getElementById('tC').value=c;document.getElementById('tD').value=d;tUpdate();}
+function tUpdate(){
+  tA=parseFloat(document.getElementById('tA').value);tB=parseFloat(document.getElementById('tB').value);
+  tC=parseFloat(document.getElementById('tC').value);tD=parseFloat(document.getElementById('tD').value);
+  document.getElementById('tVA').textContent=fmt(tA);document.getElementById('tVB').textContent=fmt(tB);
+  document.getElementById('tVC').textContent=fmt(tC);document.getElementById('tVD').textContent=fmt(tD);
+  const cS=tC>=0?'+':'−',dS=tD>=0?'+':'−';
+  document.getElementById('tEq').innerHTML=`y = <span class="ca">${fmt(tA)}</span>·sin(<span class="cb">${fmt(tB)}</span>x ${cS} <span class="cc">${fmt(Math.abs(tC))}</span>) ${dS} <span class="c-purple">${fmt(Math.abs(tD))}</span>`;
+  const period = Math.abs(tB)>0.001 ? fmt(2*Math.PI/Math.abs(tB)) : '∞';
+  document.getElementById('tMeta').innerHTML=`<span>Amplitudo: <strong>${fmt(Math.abs(tA))}</strong></span><span>Periode: <strong>${period}</strong></span><span>Fase: <strong>${fmt(tC)} rad</strong></span><span>Range: <strong>[${fmt(tD-Math.abs(tA))}, ${fmt(tD+Math.abs(tA))}]</strong></span>`;
+  tDraw();
+}
+function tDraw(){
+  const cv=document.getElementById('tCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'),r=cv.parentElement.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width,H=r.height,g=drawGrid(ctx,W,H,tState.viewX,tState.viewY,tState.scale);
+  plotFn(ctx, x=>tA*Math.sin(tB*x+tC)+tD, W,H,g.m2s,g.s2m,'#0078B2',2.5);
+  // Midline
+  if(Math.abs(tD)>0.001){const[,my]=g.m2s(0,tD);ctx.strokeStyle='#7C4DFF44';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(0,my);ctx.lineTo(W,my);ctx.stroke();ctx.setLineDash([]);}
+}
+pgInit['trigonometri'] = () => {
+  if(!tSetup){['tA','tB','tC','tD'].forEach(id=>document.getElementById(id).addEventListener('input',tUpdate));addDrag(document.getElementById('tCanvas'),tState,tDraw);window.addEventListener('resize',()=>{if(currentPg==='trigonometri')tDraw();});tSetup=true;}
+  tUpdate();
+};
+
+// ============================================================
+// 4. EKSPONENSIAL & LOGARITMA
+// ============================================================
+document.getElementById('pg-eksponen').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>🚀 Eksponensial & Logaritma</h2><p>Bandingkan pertumbuhan eksponensial dan logaritmik</p></div>
+  <div class="pg-section">
+    <h3>Dua Fungsi yang Saling Invers</h3>
+    <div class="formula">Eksponensial: y = a · b<sup>x</sup></div>
+    <div class="formula">Logaritma: y = a · log<sub>b</sub>(x)</div>
+    <ul>
+      <li><strong>Eksponensial</strong> — pertumbuhan sangat cepat. Contoh: pertumbuhan virus, bunga majemuk, perkembangan AI</li>
+      <li><strong>Logaritma</strong> — pertumbuhan sangat lambat. Contoh: skala Richter, desibel, kompleksitas algoritma</li>
+      <li>Keduanya saling invers: jika y = bˣ maka x = log_b(y)</li>
+    </ul>
+  </div>
+  <div class="props-bar"><div class="eq" id="eEq">y = 1 · 2<sup>x</sup></div><div class="meta" id="eMeta"></div></div>
+  <div class="canvas-box" style="height:340px"><canvas id="eCanvas"></canvas><div class="canvas-hint">drag · scroll zoom</div></div>
+  <div class="sliders-row">
+    <div class="sg"><div class="sg-top"><span class="c-red">a (skala)</span><span class="c-red" id="eVA">1.0</span></div><input type="range" id="eA" class="bg-red" min="0.1" max="5" step="0.1" value="1"></div>
+    <div class="sg"><div class="sg-top"><span class="c-blue">b (basis)</span><span class="c-blue" id="eVB">2.0</span></div><input type="range" id="eB" class="bg-blue" min="0.1" max="5" step="0.1" value="2"></div>
+  </div>
+  <div class="presets-row">
+    <button onclick="ePreset(1,2)">Basis 2</button><button onclick="ePreset(1,2.718)">Basis e (natural)</button>
+    <button onclick="ePreset(1,10)">Basis 10</button><button onclick="ePreset(1,0.5)">Decay (b&lt;1)</button>
+    <button onclick="ePreset(2,3)">a=2, b=3</button>
+  </div>
+  <div class="pg-section"><h3>Fun Fact</h3><p>Pertumbuhan AI mengikuti pola eksponensial. Kemampuan model AI (diukur dari benchmark) berlipat ganda setiap ~6 bulan. Ini disebut <strong>"scaling law"</strong> — dan fondasinya adalah matematika eksponensial yang kalian pelajari di sini!</p></div>
+</div>`;
+
+const eState = { viewX:0, viewY:0, scale:40 };
+let eA=1,eB=2,eSetup=false;
+function ePreset(a,b){document.getElementById('eA').value=a;document.getElementById('eB').value=Math.min(b,5);eUpdate();}
+function eUpdate(){
+  eA=parseFloat(document.getElementById('eA').value);eB=parseFloat(document.getElementById('eB').value);
+  document.getElementById('eVA').textContent=fmt(eA);document.getElementById('eVB').textContent=fmt(eB);
+  document.getElementById('eEq').innerHTML=`<span class="ca">${fmt(eA)}</span> · <span class="cc">${fmt(eB)}</span><sup>x</sup>  &nbsp;&&nbsp;  <span class="ca">${fmt(eA)}</span> · log<sub>${fmt(eB)}</sub>(x)`;
+  const growth = eB>1?'Pertumbuhan (b&gt;1)':eB<1?'Peluruhan (b&lt;1)':'Konstan (b=1)';
+  document.getElementById('eMeta').innerHTML=`<span>${growth}</span><span>y-intercept exp: <strong>(0, ${fmt(eA)})</strong></span><span>x-intercept log: <strong>(1, 0)</strong></span>`;
+  eDraw();
+}
+function eDraw(){
+  const cv=document.getElementById('eCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'),r=cv.parentElement.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width,H=r.height,g=drawGrid(ctx,W,H,eState.viewX,eState.viewY,eState.scale);
+  plotFn(ctx, x=>eA*Math.pow(eB,x), W,H,g.m2s,g.s2m,'#0078B2',2.5);
+  plotFn(ctx, x=>x>0?eA*Math.log(x)/Math.log(eB):NaN, W,H,g.m2s,g.s2m,'#FF5E57',2.5);
+  // y=x line (mirror)
+  ctx.strokeStyle='#DDE3EA';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();
+  const [x0,y0]=g.m2s(-20,-20),[x1,y1]=g.m2s(20,20);ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();ctx.setLineDash([]);
+  // Legend
+  ctx.font='bold 11px system-ui';ctx.textAlign='left';
+  ctx.fillStyle='#0078B2';ctx.fillText('exp: '+fmt(eA)+'·'+fmt(eB)+'^x',10,20);
+  ctx.fillStyle='#FF5E57';ctx.fillText('log: '+fmt(eA)+'·log(x)',10,36);
+  ctx.fillStyle='#ccc';ctx.fillText('y = x (mirror)',10,52);
+}
+pgInit['eksponen'] = () => {
+  if(!eSetup){['eA','eB'].forEach(id=>document.getElementById(id).addEventListener('input',eUpdate));addDrag(document.getElementById('eCanvas'),eState,eDraw);window.addEventListener('resize',()=>{if(currentPg==='eksponen')eDraw();});eSetup=true;}
+  eUpdate();
+};
+
+// ============================================================
+// 5. LEMPAR DADU — CENTRAL LIMIT THEOREM
+// ============================================================
+document.getElementById('pg-statistik').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>🎲 Lempar Dadu & Central Limit Theorem</h2><p>Kenapa distribusi normal ada di mana-mana?</p></div>
+  <div class="pg-section">
+    <h3>Ceritanya Begini...</h3>
+    <p>Bayangkan kamu lempar <strong>1 dadu</strong>. Hasilnya bisa 1, 2, 3, 4, 5, atau 6 — semua sama kemungkinannya. Distribusinya <strong>rata (uniform)</strong>.</p>
+    <p style="margin-top:8px">Sekarang lempar <strong>2 dadu</strong>, jumlahkan hasilnya. Tiba-tiba angka 7 lebih sering muncul daripada 2 atau 12. Mulai ada <strong>puncak</strong>.</p>
+    <p style="margin-top:8px">Lempar <strong>5, 10, 30 dadu</strong>? Semakin banyak dadu, semakin mirip <strong>bell curve</strong> (distribusi normal)!</p>
+    <p style="margin-top:8px">Ini namanya <strong>Central Limit Theorem</strong> — salah satu teorema paling penting di statistik. Rata-rata dari banyak kejadian acak <em>selalu</em> mendekati distribusi normal, apapun distribusi aslinya.</p>
+  </div>
+  <div class="props-bar">
+    <div class="eq" id="dEq">Lempar <span class="ca">1</span> dadu, <span class="cc">0</span> kali</div>
+    <div class="meta" id="dMeta"></div>
+  </div>
+  <div class="canvas-box" style="height:320px"><canvas id="dCanvas"></canvas></div>
+  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
+    <button class="presets-row" style="display:contents" id="dBtns">
+      <button onclick="dRoll(10)" class="btn-roll" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:1rem;font-weight:700;cursor:pointer">🎲 Lempar 10x</button>
+      <button onclick="dRoll(100)" class="btn-roll" style="background:var(--purple);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:.9rem;font-weight:600;cursor:pointer">Lempar 100x</button>
+      <button onclick="dRoll(1000)" class="btn-roll" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:.9rem;font-weight:600;cursor:pointer">Lempar 1000x</button>
+      <button onclick="dReset()" style="background:var(--bg);color:var(--gray);border:1.5px solid var(--border);border-radius:8px;padding:10px 16px;font-size:.85rem;cursor:pointer">Reset</button>
+    </button>
+  </div>
+  <div class="sliders-row">
+    <div class="sg"><div class="sg-top"><span class="c-red">Jumlah Dadu</span><span class="c-red" id="dVN">1</span></div><input type="range" id="dN" class="bg-red" min="1" max="30" step="1" value="1"><div class="sg-btns"><button onclick="dSetN(1)">1</button><button onclick="dSetN(2)">2</button><button onclick="dSetN(5)">5</button><button onclick="dSetN(10)">10</button><button onclick="dSetN(30)">30</button></div></div>
+  </div>
+  <div class="pg-section">
+    <h3>Kenapa Ini Penting?</h3>
+    <ul>
+      <li><strong>Di AI/ML:</strong> Distribusi normal dipakai untuk inisialisasi weight neural network, noise injection, dan Gaussian processes</li>
+      <li><strong>Di kehidupan:</strong> Tinggi badan, nilai ujian, suhu harian — semuanya mendekati distribusi normal karena CLT</li>
+      <li><strong>Aturan 68-95-99.7:</strong> ~68% data dalam 1σ, ~95% dalam 2σ, ~99.7% dalam 3σ dari mean</li>
+    </ul>
+  </div>
+  <div class="pg-section">
+    <h3>Coba Sendiri!</h3>
+    <ul>
+      <li>Mulai dengan 1 dadu, lempar 1000x — lihat distribusi rata</li>
+      <li>Ganti ke 2 dadu, lempar 1000x — mulai ada puncak di 7!</li>
+      <li>Ganti ke 30 dadu, lempar 1000x — bell curve sempurna!</li>
+      <li>Perhatikan: semakin banyak dadu, semakin sempit dan tinggi puncaknya</li>
+    </ul>
+  </div>
+</div>`;
+
+let dNumDice=1, dResults=[], dSetup=false;
+function dSetN(n){document.getElementById('dN').value=n;dNumDice=n;dReset();}
+function dReset(){dResults=[];dDrawHist();dUpdateMeta();}
+function dRoll(times){
+  dNumDice=parseInt(document.getElementById('dN').value);
+  document.getElementById('dVN').textContent=dNumDice;
+  for(let t=0;t<times;t++){
+    let sum=0;
+    for(let d=0;d<dNumDice;d++) sum+=Math.floor(Math.random()*6)+1;
+    dResults.push(sum);
+  }
+  dDrawHist();dUpdateMeta();
+}
+function dUpdateMeta(){
+  document.getElementById('dEq').innerHTML=`Lempar <span class="ca">${dNumDice}</span> dadu, <span class="cc">${dResults.length}</span> kali`;
+  if(dResults.length>0){
+    const mean=dResults.reduce((a,b)=>a+b,0)/dResults.length;
+    const variance=dResults.reduce((a,b)=>a+(b-mean)**2,0)/dResults.length;
+    const std=Math.sqrt(variance);
+    const theorMean=dNumDice*3.5, theorStd=Math.sqrt(dNumDice*35/12);
+    document.getElementById('dMeta').innerHTML=`<span>Mean: <strong>${mean.toFixed(2)}</strong> (teori: ${theorMean.toFixed(1)})</span><span>Std Dev: <strong>${std.toFixed(2)}</strong> (teori: ${theorStd.toFixed(2)})</span><span>Min: <strong>${Math.min(...dResults)}</strong></span><span>Max: <strong>${Math.max(...dResults)}</strong></span>`;
+  } else { document.getElementById('dMeta').innerHTML='<span>Klik "Lempar" untuk mulai!</span>'; }
+}
+function dDrawHist(){
+  const cv=document.getElementById('dCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'),r=cv.parentElement.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width,H=r.height;
+  ctx.fillStyle='#FAFBFC';ctx.fillRect(0,0,W,H);
+  const minVal=dNumDice, maxVal=dNumDice*6;
+  const numBins=maxVal-minVal+1;
+  const bins=new Array(numBins).fill(0);
+  dResults.forEach(v=>{bins[v-minVal]++;});
+  const maxCount=Math.max(...bins,1);
+  const pad={l:50,r:20,t:20,b:40};
+  const plotW=W-pad.l-pad.r, plotH=H-pad.t-pad.b;
+  const barW=Math.min(plotW/numBins-1, 40);
+  const totalBarsW=numBins*barW+(numBins-1)*1;
+  const startX=pad.l+(plotW-totalBarsW)/2;
+  // Axes
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
+  // Bars
+  bins.forEach((count,i)=>{
+    const x=startX+i*(barW+1);
+    const barH=(count/maxCount)*plotH;
+    const progress=dNumDice<=1?0:Math.min(1,(dNumDice-1)/10);
+    const r2=Math.round(0x00+(0x7C-0x00)*progress);
+    const g2=Math.round(0x78+(0x4D-0x78)*progress);
+    const b2=Math.round(0xB2+(0xFF-0xB2)*progress);
+    ctx.fillStyle=`rgb(${r2},${g2},${b2})`;
+    ctx.fillRect(x,H-pad.b-barH,barW,barH);
+  });
+  // X labels (sparse)
+  ctx.fillStyle='#999';ctx.font='10px system-ui';ctx.textAlign='center';
+  const step=numBins>20?Math.ceil(numBins/15):1;
+  for(let i=0;i<numBins;i+=step){
+    const x=startX+i*(barW+1)+barW/2;
+    ctx.fillText(String(minVal+i),x,H-pad.b+14);
+  }
+  // Y label
+  ctx.textAlign='right';ctx.fillText(String(maxCount),pad.l-6,pad.t+10);
+  ctx.fillText('0',pad.l-6,H-pad.b+4);
+  // Normal curve overlay if enough data
+  if(dResults.length>=20 && dNumDice>=2){
+    const mean=dResults.reduce((a,b)=>a+b,0)/dResults.length;
+    const variance=dResults.reduce((a,b)=>a+(b-mean)**2,0)/dResults.length;
+    const std=Math.sqrt(variance);
+    if(std>0){
+      ctx.strokeStyle='#FF5E57';ctx.lineWidth=2;ctx.beginPath();let first=true;
+      for(let px=0;px<plotW;px++){
+        const val=minVal+(px/plotW)*(maxVal-minVal);
+        const pdf=(1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((val-mean)/std)**2);
+        const scaledY=pdf*(maxVal-minVal+1)*dResults.length/maxCount*plotH;
+        const sx=pad.l+px, sy=H-pad.b-scaledY;
+        if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+      }
+      ctx.stroke();
+      ctx.fillStyle='#FF5E57';ctx.font='bold 10px system-ui';ctx.textAlign='left';
+      ctx.fillText('Normal curve (fit)',pad.l+4,pad.t+10);
+    }
+  }
+  if(dResults.length===0){ctx.fillStyle='#ccc';ctx.font='16px system-ui';ctx.textAlign='center';ctx.fillText('Klik "Lempar" untuk mulai simulasi!',W/2,H/2);}
+}
+pgInit['statistik'] = () => {
+  if(!dSetup){
+    document.getElementById('dN').addEventListener('input',()=>{dNumDice=parseInt(document.getElementById('dN').value);document.getElementById('dVN').textContent=dNumDice;dReset();});
+    window.addEventListener('resize',()=>{if(currentPg==='statistik')dDrawHist();});
+    dSetup=true;
+  }
+  dUpdateMeta();dDrawHist();
+};
+
+// ============================================================
+// HANDLE HASH ON LOAD
+// ============================================================
+if (location.hash) {
+  const h = location.hash.replace('#','');
+  if (pgInit[h]) setTimeout(() => openPlayground(h), 100);
+}
+</script>
+
+<script>
+// ============================================================
+// 6. GRAPH DETECTIVE — AI TEBAK GRAFIK
+// ============================================================
+document.getElementById('pg-detective').innerHTML = `
+<div class="pg-wrap">
+  <div class="pg-header"><h2>🔍 Graph Detective</h2><p>Gambar grafik, foto, AI tebak persamaannya</p></div>
+  <div class="pg-section">
+    <h3>Cara Main</h3>
+    <ol>
+      <li>Gambar grafik fungsi di kertas atau whiteboard — bebas bentuk apapun</li>
+      <li>Foto gambar tersebut, lalu upload di bawah</li>
+      <li>Klik <strong>"Tebak!"</strong> — AI akan menganalisis gambar dan menebak persamaannya</li>
+      <li>Persamaan tebakan AI otomatis ter-plot di grafik. Mirip atau meleset?</li>
+      <li>Kalau salah, kamu bisa ketik koreksi manual dan bandingkan!</li>
+    </ol>
+    <p style="margin-top:8px"><strong>Pesan:</strong> AI bisa menganalisis gambar, tapi yang menentukan benar atau salah tetap kamu — yang paham matematika.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="padding:10px 14px;font-weight:700;font-size:.85rem;color:var(--blue);border-bottom:1px solid var(--border)">Gambar Asli</div>
+      <div id="gdPhotoArea" style="min-height:240px;display:flex;align-items:center;justify-content:center;padding:12px;background:#FAFBFC;cursor:pointer" onclick="document.getElementById('gdFile').click()">
+        <div id="gdDropText" style="text-align:center;color:#bbb"><div style="font-size:2rem">📸</div><div style="font-size:.85rem;margin-top:4px">Klik untuk upload foto</div></div>
+      </div>
+      <div id="gdPhotoControls" style="display:none;padding:8px 14px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:6px">
+        <button onclick="gdGuess()" id="gdBtnGuess" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:.9rem">Tebak!</button>
+        <button onclick="gdRemovePhoto()" style="background:var(--bg);color:var(--gray);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.8rem;cursor:pointer">Ganti</button>
+      </div>
+      <div id="gdStatus" style="padding:8px 14px;font-size:.8rem;text-align:center;display:none"></div>
+      <div id="gdReason" style="padding:8px 14px;font-size:.8rem;color:var(--gray);font-style:italic;display:none;border-top:1px solid var(--border)"></div>
+    </div>
+    <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="padding:10px 14px;font-weight:700;font-size:.85rem;color:var(--purple);border-bottom:1px solid var(--border)">Tebakan AI</div>
+      <div class="canvas-box" style="height:240px;margin:0;border:none;border-radius:0"><canvas id="gdCanvas"></canvas></div>
+      <div id="gdEqList" style="padding:6px 14px;display:flex;flex-wrap:wrap;gap:4px"></div>
+      <div style="padding:8px 14px;display:flex;gap:6px;border-top:1px solid var(--border)">
+        <input type="text" id="gdEqInput" placeholder="y = x^2 - 3*x + 2" style="flex:1;background:#fff;border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:.85rem;outline:none">
+        <button onclick="gdAddEq()" style="background:var(--purple);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-weight:600;font-size:.85rem;cursor:pointer">Plot</button>
+        <button onclick="gdClear()" style="background:var(--bg);color:var(--gray);border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.8rem;cursor:pointer">Reset</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="gdFile" accept="image/*" capture="environment" style="display:none">
+</div>`;
+
+const gdState={viewX:0,viewY:0,scale:40};
+let gdEqs=[], gdPhotoData=null, gdSetup=false;
+const GD_COLORS=['#FF5E57','#1a8a45','#b07d00','#0078B2','#7C4DFF'];
+
+function gdRemovePhoto(){
+  gdPhotoData=null;
+  const area=document.getElementById('gdPhotoArea');
+  const img=area.querySelector('img'); if(img) img.remove();
+  document.getElementById('gdDropText').style.display='block';
+  document.getElementById('gdPhotoControls').style.display='none';
+  document.getElementById('gdStatus').style.display='none';
+  document.getElementById('gdReason').style.display='none';
+}
+function gdAddEq(){
+  const val=document.getElementById('gdEqInput').value.trim(); if(!val) return;
+  const parsed=gdParseEq(val); if(!parsed) return;
+  gdEqs.push({...parsed,color:GD_COLORS[gdEqs.length%GD_COLORS.length],ci:gdEqs.length%GD_COLORS.length});
+  document.getElementById('gdEqInput').value=''; gdRenderEqs(); gdDraw();
+}
+function gdClear(){gdEqs=[];gdRenderEqs();gdDraw();}
+function gdRemoveEq(i){gdEqs.splice(i,1);gdRenderEqs();gdDraw();}
+function gdRenderEqs(){
+  document.getElementById('gdEqList').innerHTML=gdEqs.map((eq,i)=>`<span class="eq-tag color-${eq.ci}" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:16px;font-size:.75rem;font-family:monospace;font-weight:600">y=${eq.original}<span onclick="gdRemoveEq(${i})" style="cursor:pointer;opacity:.6">&#10005;</span></span>`).join('');
+}
+function gdParseEq(str){
+  let e=str.trim().toLowerCase().replace(/^[yf]\s*\(?\s*x?\s*\)?\s*=\s*/,'');
+  e=e.replace(/\^/g,'**').replace(/(\d)(x)/g,'$1*$2').replace(/(\))(x)/g,'$1*$2');
+  e=e.replace(/(x)(\()/g,'$1*$2').replace(/(\d)(\()/g,'$1*$2').replace(/(\))(\()/g,'$1*$2');
+  e=e.replace(/(\d)(sin|cos|tan|log|ln|sqrt|abs|exp)/g,'$1*$2');
+  e=e.replace(/\bsin\b/g,'Math.sin').replace(/\bcos\b/g,'Math.cos').replace(/\btan\b/g,'Math.tan');
+  e=e.replace(/\bsqrt\b/g,'Math.sqrt').replace(/\babs\b/g,'Math.abs');
+  e=e.replace(/\bln\b/g,'Math.log').replace(/\blog\b/g,'Math.log10');
+  e=e.replace(/\bexp\b/g,'Math.exp').replace(/\bpi\b/g,'Math.PI').replace(/\be\b(?!\w)/g,'Math.E');
+  try{const fn=new Function('x',`"use strict";return(${e});`);fn(1);fn(0);fn(-1);return{fn,original:str.trim(),parsed:e};}catch{return null;}
+}
+function gdDraw(){
+  const cv=document.getElementById('gdCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'),r=cv.parentElement.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width,H=r.height,g=drawGrid(ctx,W,H,gdState.viewX,gdState.viewY,gdState.scale);
+  gdEqs.forEach(eq=>{plotFn(ctx,eq.fn,W,H,g.m2s,g.s2m,eq.color,2.5);});
+  if(!gdEqs.length){ctx.fillStyle='#ccc';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('Upload foto, lalu klik "Tebak!"',W/2,H/2);}
+}
+async function gdGuess(){
+  if(!gdPhotoData) return;
+  let key=sessionStorage.getItem('oai_key')||'';
+  if(!key){key=prompt('Masukkan OpenAI API Key (sk-...):');if(!key)return;sessionStorage.setItem('oai_key',key);}
+  const btn=document.getElementById('gdBtnGuess');
+  btn.disabled=true;btn.textContent='Berpikir...';
+  const st=document.getElementById('gdStatus');st.style.display='block';st.style.color='var(--blue)';st.textContent='AI sedang menganalisis gambar...';
+  document.getElementById('gdReason').style.display='none';
+  try{
+    const base64=gdPhotoData.split(',')[1];const mime=gdPhotoData.split(';')[0].split(':')[1];
+    const resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'gpt-4o',max_tokens:1024,messages:[{role:'user',content:[
+        {type:'text',text:'Kamu adalah ahli matematika. Lihat foto grafik yang digambar tangan ini.\n\nTugasmu:\n1. Identifikasi bentuk grafik\n2. Tebak persamaan matematikanya\n\nFormat jawaban HARUS:\nPERSAMAAN: [persamaan, gunakan: x^2, sin(x), sqrt(x), abs(x), exp(x), pi, * untuk kali]\nPENJELASAN: [1-2 kalimat bahasa Indonesia]\n\nJangan gunakan LaTeX.'},
+        {type:'image_url',image_url:{url:'data:'+mime+';base64,'+base64,detail:'high'}}
+      ]}]})});
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+resp.status);}
+    const data=await resp.json();const reply=data.choices[0].message.content;
+    const eqM=reply.match(/PERSAMAAN:\s*(.+)/i),reM=reply.match(/PENJELASAN:\s*(.+)/i);
+    if(eqM){
+      const eq=eqM[1].trim().replace(/^y\s*=\s*/i,'');
+      st.style.color='var(--green)';st.textContent='AI menebak: y = '+eq;
+      if(reM){document.getElementById('gdReason').textContent=reM[1].trim();document.getElementById('gdReason').style.display='block';}
+      document.getElementById('gdEqInput').value=eq;gdAddEq();
+    }else{st.style.color='var(--red)';st.textContent='AI tidak bisa menebak. Coba manual.';document.getElementById('gdReason').textContent=reply;document.getElementById('gdReason').style.display='block';}
+  }catch(err){st.style.color='var(--red)';st.textContent='Error: '+err.message;if(err.message.includes('401')){sessionStorage.removeItem('oai_key');}}
+  finally{btn.disabled=false;btn.textContent='Tebak!';}
+}
+pgInit['detective']=()=>{
+  if(!gdSetup){
+    document.getElementById('gdFile').addEventListener('change',e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        gdPhotoData=ev.target.result;
+        document.getElementById('gdDropText').style.display='none';
+        const area=document.getElementById('gdPhotoArea');
+        const old=area.querySelector('img');if(old)old.remove();
+        const img=document.createElement('img');img.src=gdPhotoData;img.style.cssText='max-width:100%;max-height:100%;border-radius:6px';area.appendChild(img);
+        document.getElementById('gdPhotoControls').style.display='flex';
+        document.getElementById('gdStatus').style.display='none';
+        document.getElementById('gdReason').style.display='none';
+      };
+      reader.readAsDataURL(f);
+    });
+    document.getElementById('gdEqInput').addEventListener('keydown',e=>{if(e.key==='Enter')gdAddEq();});
+    addDrag(document.getElementById('gdCanvas'),gdState,gdDraw);
+    window.addEventListener('resize',()=>{if(currentPg==='detective')gdDraw();});
+    gdSetup=true;
+  }
+  gdDraw();
+};
+</script>
+</body>
+</html>
