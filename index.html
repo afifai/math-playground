@@ -642,19 +642,37 @@ document.getElementById('pg-statistik').innerHTML = `
   </div>
 </div>`;
 
-let dNumDice=1, dResults=[], dSetup=false;
-function dSetN(n){document.getElementById('dN').value=n;dNumDice=n;dReset();}
-function dReset(){dResults=[];dDrawHist();dUpdateMeta();}
-function dRoll(times){
+let dNumDice=1, dResults=[], dSetup=false, dAnimating=false;
+function dSetN(n){if(dAnimating)return;document.getElementById('dN').value=n;dNumDice=n;dReset();}
+function dReset(){if(dAnimating)return;dResults=[];dDrawHist();dUpdateMeta();}
+
+async function dRoll(times){
+  if(dAnimating) return;
+  dAnimating=true;
+  document.querySelectorAll('.btn-roll').forEach(b=>b.disabled=true);
   dNumDice=parseInt(document.getElementById('dN').value);
   document.getElementById('dVN').textContent=dNumDice;
-  for(let t=0;t<times;t++){
-    let sum=0;
-    for(let d=0;d<dNumDice;d++) sum+=Math.floor(Math.random()*6)+1;
-    dResults.push(sum);
+
+  // Decide animation speed based on count
+  const batchSize=times<=10?1:times<=100?5:25;
+  const delay=times<=10?200:times<=100?40:8;
+
+  for(let t=0;t<times;t+=batchSize){
+    const n=Math.min(batchSize,times-t);
+    for(let b=0;b<n;b++){
+      let sum=0;
+      for(let d=0;d<dNumDice;d++) sum+=Math.floor(Math.random()*6)+1;
+      dResults.push(sum);
+    }
+    dDrawHist();
+    dUpdateMeta();
+    await new Promise(r=>setTimeout(r,delay));
   }
-  dDrawHist();dUpdateMeta();
+
+  dAnimating=false;
+  document.querySelectorAll('.btn-roll').forEach(b=>b.disabled=false);
 }
+
 function dUpdateMeta(){
   document.getElementById('dEq').innerHTML=`Lempar <span class="ca">${dNumDice}</span> dadu, <span class="cc">${dResults.length}</span> kali`;
   if(dResults.length>0){
@@ -662,72 +680,113 @@ function dUpdateMeta(){
     const variance=dResults.reduce((a,b)=>a+(b-mean)**2,0)/dResults.length;
     const std=Math.sqrt(variance);
     const theorMean=dNumDice*3.5, theorStd=Math.sqrt(dNumDice*35/12);
-    document.getElementById('dMeta').innerHTML=`<span>Mean: <strong>${mean.toFixed(2)}</strong> (teori: ${theorMean.toFixed(1)})</span><span>Std Dev: <strong>${std.toFixed(2)}</strong> (teori: ${theorStd.toFixed(2)})</span><span>Min: <strong>${Math.min(...dResults)}</strong></span><span>Max: <strong>${Math.max(...dResults)}</strong></span>`;
+    document.getElementById('dMeta').innerHTML=`<span>Mean: <strong>${mean.toFixed(2)}</strong> (teori: ${theorMean.toFixed(1)})</span><span>Std Dev: <strong>${std.toFixed(2)}</strong> (teori: ${theorStd.toFixed(2)})</span><span>Total: <strong>${dResults.length}</strong></span>`;
   } else { document.getElementById('dMeta').innerHTML='<span>Klik "Lempar" untuk mulai!</span>'; }
 }
+
 function dDrawHist(){
   const cv=document.getElementById('dCanvas'); if(!cv) return;
-  const ctx=cv.getContext('2d'),r=cv.parentElement.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
-  cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
-  const W=r.width,H=r.height;
+  const ctx=cv.getContext('2d'),rect=cv.parentElement.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=rect.width*dpr;cv.height=rect.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=rect.width,H=rect.height;
   ctx.fillStyle='#FAFBFC';ctx.fillRect(0,0,W,H);
+
   const minVal=dNumDice, maxVal=dNumDice*6;
   const numBins=maxVal-minVal+1;
   const bins=new Array(numBins).fill(0);
   dResults.forEach(v=>{bins[v-minVal]++;});
   const maxCount=Math.max(...bins,1);
-  const pad={l:50,r:20,t:20,b:40};
-  const plotW=W-pad.l-pad.r, plotH=H-pad.t-pad.b;
-  const barW=Math.min(plotW/numBins-1, 40);
+  const p={l:50,r:20,t:24,b:40};
+  const plotW=W-p.l-p.r, plotH=H-p.t-p.b;
+  const barW=Math.min(plotW/numBins-1,40);
   const totalBarsW=numBins*barW+(numBins-1)*1;
-  const startX=pad.l+(plotW-totalBarsW)/2;
-  // Axes
-  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
-  // Bars
+  const startX=p.l+(plotW-totalBarsW)/2;
+
+  // Axis
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,H-p.b);ctx.lineTo(W-p.r,H-p.b);ctx.stroke();
+
+  // Bars with gradient color based on dice count
+  const hue0=200,hue1=270; // blue to purple
+  const hueProgress=dNumDice<=1?0:Math.min(1,(dNumDice-1)/10);
   bins.forEach((count,i)=>{
+    if(count===0) return;
     const x=startX+i*(barW+1);
     const barH=(count/maxCount)*plotH;
-    const progress=dNumDice<=1?0:Math.min(1,(dNumDice-1)/10);
-    const r2=Math.round(0x00+(0x7C-0x00)*progress);
-    const g2=Math.round(0x78+(0x4D-0x78)*progress);
-    const b2=Math.round(0xB2+(0xFF-0xB2)*progress);
-    ctx.fillStyle=`rgb(${r2},${g2},${b2})`;
-    ctx.fillRect(x,H-pad.b-barH,barW,barH);
+    // Color: center bins brighter
+    const centerDist=Math.abs(i-(numBins-1)/2)/((numBins-1)/2);
+    const hue=hue0+(hue1-hue0)*hueProgress;
+    const sat=70+centerDist*20;
+    const light=45+centerDist*15;
+    ctx.fillStyle=`hsl(${hue},${sat}%,${light}%)`;
+    // Animate: slight round top
+    ctx.beginPath();
+    ctx.moveTo(x,H-p.b);
+    ctx.lineTo(x,H-p.b-barH+2);
+    ctx.quadraticCurveTo(x,H-p.b-barH,x+2,H-p.b-barH);
+    ctx.lineTo(x+barW-2,H-p.b-barH);
+    ctx.quadraticCurveTo(x+barW,H-p.b-barH,x+barW,H-p.b-barH+2);
+    ctx.lineTo(x+barW,H-p.b);
+    ctx.fill();
+
+    // Count on top of bar if space
+    if(barH>18 && barW>14){
+      ctx.fillStyle='#fff';ctx.font='bold 9px system-ui';ctx.textAlign='center';
+      ctx.fillText(count,x+barW/2,H-p.b-barH+13);
+    }
   });
-  // X labels (sparse)
+
+  // X labels
   ctx.fillStyle='#999';ctx.font='10px system-ui';ctx.textAlign='center';
-  const step=numBins>20?Math.ceil(numBins/15):1;
+  const step=numBins>25?Math.ceil(numBins/15):numBins>15?2:1;
   for(let i=0;i<numBins;i+=step){
-    const x=startX+i*(barW+1)+barW/2;
-    ctx.fillText(String(minVal+i),x,H-pad.b+14);
+    ctx.fillText(String(minVal+i),startX+i*(barW+1)+barW/2,H-p.b+14);
   }
-  // Y label
-  ctx.textAlign='right';ctx.fillText(String(maxCount),pad.l-6,pad.t+10);
-  ctx.fillText('0',pad.l-6,H-pad.b+4);
-  // Normal curve overlay if enough data
-  if(dResults.length>=20 && dNumDice>=2){
+
+  // Y labels
+  ctx.textAlign='right';ctx.fillText(String(maxCount),p.l-6,p.t+10);
+
+  // Normal curve overlay — fades in as data grows
+  if(dResults.length>=10 && dNumDice>=2){
     const mean=dResults.reduce((a,b)=>a+b,0)/dResults.length;
     const variance=dResults.reduce((a,b)=>a+(b-mean)**2,0)/dResults.length;
     const std=Math.sqrt(variance);
-    if(std>0){
-      ctx.strokeStyle='#FF5E57';ctx.lineWidth=2;ctx.beginPath();let first=true;
-      for(let px=0;px<plotW;px++){
+    if(std>0.01){
+      const curveAlpha=Math.min(0.9,dResults.length/200);
+      ctx.strokeStyle=`rgba(255,94,87,${curveAlpha})`;
+      ctx.lineWidth=2.5;ctx.beginPath();let first=true;
+      for(let px=0;px<=plotW;px+=2){
         const val=minVal+(px/plotW)*(maxVal-minVal);
         const pdf=(1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((val-mean)/std)**2);
         const scaledY=pdf*(maxVal-minVal+1)*dResults.length/maxCount*plotH;
-        const sx=pad.l+px, sy=H-pad.b-scaledY;
-        if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+        const sx=p.l+px, sy=H-p.b-scaledY;
+        if(sy>p.t-10){
+          if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+        }
       }
       ctx.stroke();
-      ctx.fillStyle='#FF5E57';ctx.font='bold 10px system-ui';ctx.textAlign='left';
-      ctx.fillText('Normal curve (fit)',pad.l+4,pad.t+10);
+
+      // Label
+      ctx.fillStyle=`rgba(255,94,87,${curveAlpha})`;ctx.font='bold 10px system-ui';ctx.textAlign='left';
+      ctx.fillText('Normal curve',p.l+4,p.t+10);
+
+      // Mean line
+      const meanX=p.l+((mean-minVal)/(maxVal-minVal))*plotW;
+      ctx.strokeStyle=`rgba(124,77,255,${curveAlpha*0.5})`;ctx.lineWidth=1;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(meanX,p.t);ctx.lineTo(meanX,H-p.b);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=`rgba(124,77,255,${curveAlpha})`;ctx.font='9px system-ui';ctx.textAlign='center';
+      ctx.fillText('μ='+mean.toFixed(1),meanX,p.t-2);
     }
   }
-  if(dResults.length===0){ctx.fillStyle='#ccc';ctx.font='16px system-ui';ctx.textAlign='center';ctx.fillText('Klik "Lempar" untuk mulai simulasi!',W/2,H/2);}
+
+  if(dResults.length===0){
+    ctx.fillStyle='#ccc';ctx.font='16px system-ui';ctx.textAlign='center';
+    ctx.fillText('Klik "Lempar" untuk mulai!',W/2,H/2);
+  }
 }
+
 pgInit['statistik'] = () => {
   if(!dSetup){
-    document.getElementById('dN').addEventListener('input',()=>{dNumDice=parseInt(document.getElementById('dN').value);document.getElementById('dVN').textContent=dNumDice;dReset();});
+    document.getElementById('dN').addEventListener('input',()=>{if(dAnimating)return;dNumDice=parseInt(document.getElementById('dN').value);document.getElementById('dVN').textContent=dNumDice;dReset();});
     window.addEventListener('resize',()=>{if(currentPg==='statistik')dDrawHist();});
     dSetup=true;
   }
