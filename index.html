@@ -754,14 +754,16 @@ function dDrawHist(){
       const curveAlpha=Math.min(0.9,dResults.length/200);
       ctx.strokeStyle=`rgba(255,94,87,${curveAlpha})`;
       ctx.lineWidth=2.5;ctx.beginPath();let first=true;
-      for(let px=0;px<=plotW;px+=2){
-        const val=minVal+(px/plotW)*(maxVal-minVal);
+      // Plot curve aligned with bar centers
+      const binStep=(barW+1);
+      for(let i=-1;i<=numBins+1;i+=0.2){
+        const val=minVal+i;
         const pdf=(1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((val-mean)/std)**2);
-        // Scale: expected count for this bin = pdf * binWidth(1) * totalSamples
         const expectedCount=pdf*dResults.length;
-        const scaledY=(expectedCount/maxCount)*plotH;
-        const sx=p.l+px, sy=H-p.b-scaledY;
-        if(sy>p.t-10){
+        const barH=(expectedCount/maxCount)*plotH;
+        const sx=startX+i*binStep+barW/2;
+        const sy=H-p.b-barH;
+        if(sx>=p.l && sx<=W-p.r){
           if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
         }
       }
@@ -772,7 +774,7 @@ function dDrawHist(){
       ctx.fillText('Normal curve',p.l+4,p.t+10);
 
       // Mean line
-      const meanX=p.l+((mean-minVal)/(maxVal-minVal))*plotW;
+      const meanX=startX+(mean-minVal)*(barW+1)+barW/2;
       ctx.strokeStyle=`rgba(124,77,255,${curveAlpha*0.5})`;ctx.lineWidth=1;ctx.setLineDash([4,3]);
       ctx.beginPath();ctx.moveTo(meanX,p.t);ctx.lineTo(meanX,H-p.b);ctx.stroke();ctx.setLineDash([]);
       ctx.fillStyle=`rgba(124,77,255,${curveAlpha})`;ctx.font='9px system-ui';ctx.textAlign='center';
