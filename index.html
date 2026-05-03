@@ -757,7 +757,9 @@ function dDrawHist(){
       for(let px=0;px<=plotW;px+=2){
         const val=minVal+(px/plotW)*(maxVal-minVal);
         const pdf=(1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((val-mean)/std)**2);
-        const scaledY=pdf*(maxVal-minVal+1)*dResults.length/maxCount*plotH;
+        // Scale: expected count for this bin = pdf * binWidth(1) * totalSamples
+        const expectedCount=pdf*dResults.length;
+        const scaledY=(expectedCount/maxCount)*plotH;
         const sx=p.l+px, sy=H-p.b-scaledY;
         if(sy>p.t-10){
           if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
